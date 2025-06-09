@@ -1,15 +1,24 @@
-import Link from "next/link";
+import { FAQs } from "~/components/faqs";
+import { Features } from "~/components/features";
+import Hero from "~/components/hero";
+import { HowItWorks } from "~/components/how-it-works";
+import { Navbar } from "~/components/navbar";
+import { Testimonials } from "~/components/testimonials";
 
 export default async function Home() {
   return (
     <div className="mx-auto w-full">
-      <div className="justiry-between flex flex-row">
-        <div>logo</div>
-        <div>navigation</div>
-        <div>actions</div>
-      </div>
-      <div>Hero</div>
-      <div>Content</div>
+      <Navbar id="navbar" />
+
+      <Hero />
+
+      <Features />
+
+      <HowItWorks />
+
+      <Testimonials />
+
+      <FAQs />
     </div>
   );
 }

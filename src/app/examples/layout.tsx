@@ -1,3 +1,5 @@
+import { Navbar } from "~/components/navbar";
+
 export default function ExamplesLayout({
   children,
 }: {
@@ -5,7 +7,7 @@ export default function ExamplesLayout({
 }) {
   return (
     <div id="ExamplesLayout">
-      <div>导航栏</div>
+      <Navbar id="navbar" />
       {children}
     </div>
   );
