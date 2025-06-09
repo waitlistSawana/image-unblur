@@ -1,3 +1,4 @@
+import { GoogleOneTap } from "@clerk/nextjs";
 import { FAQs } from "~/components/faqs";
 import { Features } from "~/components/features";
 import Hero from "~/components/hero";
@@ -8,6 +9,8 @@ import { Testimonials } from "~/components/testimonials";
 export default async function Home() {
   return (
     <div className="mx-auto w-full">
+      <GoogleOneTap />
+
       <Navbar id="navbar" />
 
       <Hero />

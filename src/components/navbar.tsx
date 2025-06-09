@@ -8,6 +8,16 @@ import {
 import { cn } from "~/lib/utils";
 import { Button } from "./ui/button";
 
+import {
+  ClerkLoaded,
+  ClerkLoading,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs";
+
 export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -25,9 +35,28 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
         <NavbarNavigation />
       </div>
 
+      {/* Auth */}
       <div className="flex flex-row gap-2">
-        <Button variant={"outline"}>Sign In</Button>
-        <Button>Sign UP</Button>
+        <ClerkLoading>
+          <Button variant={"outline"}>Sign In</Button>
+          <Button>Sign UP</Button>
+        </ClerkLoading>
+
+        <ClerkLoaded>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button variant={"outline"}>Sign In</Button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <Button>Sign UP</Button>
+            </SignUpButton>
+          </SignedOut>
+
+          <SignedIn>
+            <UserButton />
+            <Button variant={"default"}>Create Image</Button>
+          </SignedIn>
+        </ClerkLoaded>
       </div>
     </div>
   );
