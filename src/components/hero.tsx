@@ -26,12 +26,12 @@ export default function Hero({
       <p className="mx-auto max-w-6xl text-center font-mono text-lg">
         在几小时内启动你的 图片生成 SAAS 应用，而不是几天
       </p>
-      <div className="mx-auto flex flex-wrap justify-center gap-6 text-center">
+      <div className="mx-auto grid grid-cols-2 gap-6 text-center">
         <Button variant={"outline"} size={"huge"} asChild>
           <Link href={"/examples"}>Examples</Link>
         </Button>
-        <Button variant={"default"} size={"huge"}>
-          生成图片
+        <Button variant={"default"} size={"huge"} asChild>
+          <Link href={"/text-to-image"}>生成图片</Link>
         </Button>
       </div>
     </div>
