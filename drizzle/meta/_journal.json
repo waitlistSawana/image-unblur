@@ -8,6 +8,13 @@
       "when": 1749466870746,
       "tag": "0000_elite_wasp",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1749755601567,
+      "tag": "0001_tough_tattoo",
+      "breakpoints": true
     }
   ]
 }
