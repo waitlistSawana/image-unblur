@@ -36,7 +36,7 @@ export const users = createTable(
   (d) => ({
     // ids
     id: d.uuid().primaryKey().defaultRandom(),
-    clerkId: d.varchar({ length: 256 }).unique(),
+    clerkId: d.varchar({ length: 256 }).unique().notNull(),
     email: d.varchar({ length: 256 }).unique(),
     // subscription
     credit: d.integer().default(0),

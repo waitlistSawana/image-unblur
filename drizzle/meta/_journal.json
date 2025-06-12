@@ -15,6 +15,13 @@
       "when": 1749755601567,
       "tag": "0001_tough_tattoo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1749758369757,
+      "tag": "0002_panoramic_guardian",
+      "breakpoints": true
     }
   ]
 }

@@ -6,7 +6,8 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { auth } from "@clerk/nextjs/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -27,6 +28,7 @@ import { db } from "~/server/db";
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   return {
     db,
+    auth, // auth from clerk
     ...opts,
   };
 };
@@ -97,6 +99,29 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 });
 
 /**
+ * Auth Procedure
+ */
+const authMiddleware = t.middleware(async ({ next, path, ctx }) => {
+  const { userId } = await ctx.auth();
+
+  if (!userId) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: `Unauthorized tRPC procedure: [${path}]`,
+    });
+  }
+
+  return next({
+    ctx: {
+      db: ctx.db,
+      auth: ctx.auth,
+      headers: ctx.headers,
+      clerkId: userId,
+    },
+  });
+});
+
+/**
  * Public (unauthenticated) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
@@ -104,3 +129,10 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+/**
+ * Auth Procedure
+ */
+export const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(authMiddleware);

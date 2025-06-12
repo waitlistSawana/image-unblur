@@ -1,0 +1,1 @@
+ALTER TABLE "ai-image-generator-starter_user" ALTER COLUMN "clerkId" SET NOT NULL;

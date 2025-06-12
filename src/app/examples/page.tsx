@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { requireUser } from "~/actions/auth";
 import { Button, buttonVariants } from "~/components/ui/button";
 
 export default async function ExamplesPage() {
+  await requireUser();
+
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   return (
