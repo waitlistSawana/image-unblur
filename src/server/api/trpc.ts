@@ -107,7 +107,7 @@ const authMiddleware = t.middleware(async ({ next, path, ctx }) => {
   if (!userId) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
-      message: `Unauthorized tRPC procedure: [${path}]`,
+      message: `Please login to continue: [${path}]`,
     });
   }
 

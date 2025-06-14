@@ -13,6 +13,12 @@ export const env = createEnv({
       .default("development"),
     // Clerk
     CLERK_SECRET_KEY: z.string().min(1),
+    // Replicate
+    REPLICATE_API_TOKEN: z.string().min(1),
+    // Cloudflare
+    CLOUDFLARE_R2_ACCOUNT_ID: z.string().min(1),
+    CLOUDFLARE_R2_ACCESS_KEY_ID: z.string().min(1),
+    CLOUDFLARE_R2_SECRET_ACCESS_KEY: z.string().min(1),
   },
 
   /**
@@ -29,6 +35,8 @@ export const env = createEnv({
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string().default("/sign-up"),
     NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: z.string().default("/"),
     NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: z.string().default("/"),
+    // Cloudflare
+    NEXT_PUBLIC_CLOUDFLARE_R2_URL: z.string().url(),
   },
 
   /**
@@ -49,7 +57,14 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL,
     NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL:
       process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL,
-    // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+    // Replicate
+    REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN,
+    // Cloudflare
+    CLOUDFLARE_R2_ACCOUNT_ID: process.env.CLOUDFLARE_R2_ACCOUNT_ID,
+    CLOUDFLARE_R2_ACCESS_KEY_ID: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+    CLOUDFLARE_R2_SECRET_ACCESS_KEY:
+      process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+    NEXT_PUBLIC_CLOUDFLARE_R2_URL: process.env.NEXT_PUBLIC_CLOUDFLARE_R2_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

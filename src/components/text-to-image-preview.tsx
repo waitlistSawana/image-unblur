@@ -17,8 +17,8 @@ import { Progress } from "./ui/progress";
 interface TextToImagePreviewProps {
   className?: string;
   isLoading: boolean;
-  setIsLoading: (isLoading: boolean) => void;
-  generatedImageUrl?: string;
+  setIsLoading?: (isLoading: boolean) => void;
+  generatedImageUrl?: string[];
   onRegenerate?: () => void;
 }
 
@@ -57,7 +57,6 @@ const DefaultPreview = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="bg-background rounded-lg border p-4">
-          <h3 className="mb-4 text-center text-lg font-medium">How it works</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div className="col-span-3 space-y-4 md:col-span-3">
               <div className="flex items-baseline justify-start gap-2 rounded-lg border bg-blue-50 p-3 transition-all dark:bg-blue-950">
@@ -178,7 +177,7 @@ const ResultPreview = ({
   imageUrl,
   onRegenerate,
 }: {
-  imageUrl: string;
+  imageUrl: string[];
   onRegenerate?: () => void;
 }) => {
   return (
@@ -190,34 +189,40 @@ const ResultPreview = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex justify-center">
-          <div className="relative w-full overflow-hidden rounded-lg border">
-            <img
-              src={imageUrl}
-              alt="AI generated image"
-              className="h-full w-full"
-            />
+        {imageUrl.map((url, index) => (
+          <div key={url + index} className="flex justify-center">
+            <div className="relative w-full overflow-hidden rounded-lg border">
+              <img
+                src={url}
+                alt="AI generated image"
+                className="h-full w-full"
+              />
 
-            <div className="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-              <div className="flex justify-center gap-2">
-                <Button variant="secondary" size="sm">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </Button>
-                <Button variant="secondary" size="sm">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share
-                </Button>
-                {onRegenerate && (
-                  <Button variant="secondary" size="sm" onClick={onRegenerate}>
-                    <Repeat className="mr-2 h-4 w-4" />
-                    Regenerate
+              <div className="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                <div className="flex justify-center gap-2">
+                  <Button variant="secondary" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
                   </Button>
-                )}
+                  <Button variant="secondary" size="sm">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </Button>
+                  {onRegenerate && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={onRegenerate}
+                    >
+                      <Repeat className="mr-2 h-4 w-4" />
+                      Regenerate
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ))}
       </CardContent>
     </Card>
   );

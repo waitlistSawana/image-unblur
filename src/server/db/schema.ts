@@ -14,6 +14,23 @@ export const createTable = pgTableCreator(
   (name) => `ai-image-generator-starter_${name}`,
 );
 
+// Enum
+export const planEnum = pgEnum("plan", ["free", "basic", "pro", "enterprise"]);
+export const uploadStatusEnum = pgEnum("upload_status", [
+  "pending",
+  "processing",
+  "completed",
+  "failed",
+]);
+export const modelEnum = pgEnum("model", [
+  "black-forest-labs/flux-kontext-pro",
+  "upload",
+]);
+export const displayStatusEnum = pgEnum("display_status", [
+  "public",
+  "private",
+]);
+
 // 测试用 不要删除
 export const posts = createTable(
   "post",
@@ -28,8 +45,6 @@ export const posts = createTable(
   }),
   (t) => [index("name_idx").on(t.name)],
 );
-
-export const planEnum = pgEnum("plan", ["free", "basic", "pro", "enterprise"]);
 
 export const users = createTable(
   "user",
@@ -61,21 +76,6 @@ export const users = createTable(
     index("user_createdAt_idx").on(t.createdAt),
   ],
 );
-
-export const uploadStatusEnum = pgEnum("upload_status", [
-  "pending",
-  "processing",
-  "completed",
-  "failed",
-]);
-export const modelEnum = pgEnum("model", [
-  "black-forest-labs/flux-kontext-pro",
-  "upload",
-]);
-export const displayStatusEnum = pgEnum("display_status", [
-  "public",
-  "private",
-]);
 
 export const images = createTable(
   "image",

@@ -3,7 +3,7 @@
 import { cn } from "~/lib/utils";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dices, Loader2 } from "lucide-react";
+import { Dices, Loader2, Trash, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -34,7 +34,7 @@ import {
   CardTitle,
 } from "./ui/card";
 
-const textToImageFormSchema = z.object({
+export const textToImageFormSchema = z.object({
   // 必填字段
   prompt: z.string().min(1),
   // 带默认值的字段
@@ -65,7 +65,7 @@ const textToImageFormSchema = z.object({
 
 interface TextToImageFormProps {
   className?: string;
-  isLoading?: boolean;
+  isLoading: boolean;
   handleSubmit?: (values: z.infer<typeof textToImageFormSchema>) => void;
   setIsLoading?: (isLoading: boolean) => void;
 }
@@ -89,8 +89,6 @@ export default function TextToImageForm({
   });
 
   async function onSubmit(values: z.infer<typeof textToImageFormSchema>) {
-    toast.success(`${JSON.stringify(values, null, 2)}`);
-
     if (handleSubmit) {
       handleSubmit(values);
     }
@@ -165,7 +163,7 @@ export default function TextToImageForm({
                         className="cursor-pointer bg-zinc-200 text-zinc-800 hover:bg-zinc-200"
                         onClick={() => field.onChange("")}
                       >
-                        Clear
+                        <Trash />
                       </Button>
                     </div>
                     <FormMessage />
@@ -304,7 +302,7 @@ export default function TextToImageForm({
             <CardFooter>
               <Button
                 type="submit"
-                className="w-full transition-all"
+                className="w-full cursor-pointer transition-all"
                 disabled={isLoading}
               >
                 {isLoading ? (
