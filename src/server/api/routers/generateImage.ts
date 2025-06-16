@@ -1,13 +1,6 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { TRPCError } from "@trpc/server";
-import type { FileOutput } from "replicate";
-import { env } from "~/env";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { images } from "~/server/db/schema";
-import { BUCKET_NAME, S3 } from "~/service/cloudflare/r2/indext";
-import { replicate } from "~/service/replicate";
 import { z } from "zod";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const blackForestLabsKontextProSchema = z.object({
   prompt: z
@@ -96,94 +89,97 @@ export const generateImageRouter = createTRPCRouter({
         ...(input.input_image && { input_image: input.input_image }),
       };
 
-      const output = await replicate.run("black-forest-labs/flux-kontext-pro", {
-        input: replicateInput,
-      });
+      // const output = await replicate.run("black-forest-labs/flux-kontext-pro", {
+      //   input: replicateInput,
+      // });
 
-      // 2. save image - cloudlare r2
-      const outputs = Array.isArray(output)
-        ? (output as FileOutput[])
-        : ([output] as FileOutput[]);
+      // // 2. save image - cloudlare r2
+      // const outputs = Array.isArray(output)
+      //   ? (output as FileOutput[])
+      //   : ([output] as FileOutput[]);
 
-      const uploadedImages: {
-        url: string;
-        size: number;
-        contentType: string | null;
-        filename: string;
-        fullFilename: string;
-      }[] = [];
+      // const uploadedImages: {
+      //   url: string;
+      //   size: number;
+      //   contentType: string | null;
+      //   filename: string;
+      //   fullFilename: string;
+      // }[] = [];
 
-      for (const output of outputs) {
-        const url = output.url();
-        const blob = await output.blob();
+      // for (const output of outputs) {
+      //   const url = output.url();
+      //   const blob = await output.blob();
 
-        const contentType = await getContentTypeFromUrlAndBlob(url, blob);
-        const size = blob.size;
+      //   const contentType = await getContentTypeFromUrlAndBlob(url, blob);
+      //   const size = blob.size;
 
-        const filename = url.pathname.split("/").pop()!;
-        const fullFilename = `${clerkId}/${filename}`;
+      //   const filename = url.pathname.split("/").pop() ?? `${Date.now()}`;
+      //   const fullFilename = `${clerkId}/${filename}`;
 
-        const uploadUrl = await getSignedUrl(
-          S3,
-          new PutObjectCommand({ Bucket: BUCKET_NAME, Key: fullFilename }),
-          { expiresIn: 60 * 10 },
-        );
+      //   const uploadUrl = await getSignedUrl(
+      //     S3,
+      //     new PutObjectCommand({ Bucket: BUCKET_NAME, Key: fullFilename }),
+      //     { expiresIn: 60 * 10 },
+      //   );
 
-        const uploadResponse = await fetch(uploadUrl, {
-          method: "PUT",
-          body: blob,
-          ...(contentType && {
-            headers: {
-              "Content-Type": contentType,
-            },
-          }),
-        });
+      //   const uploadResponse = await fetch(uploadUrl, {
+      //     method: "PUT",
+      //     body: blob,
+      //     ...(contentType && {
+      //       headers: {
+      //         "Content-Type": contentType,
+      //       },
+      //     }),
+      //   });
 
-        // TODO: 上传失败后的重试操作
+      //   // TODO: 上传失败后的重试操作
 
-        if (!uploadResponse.ok) {
-          console.error({ uploadResponse });
+      //   if (!uploadResponse.ok) {
+      //     console.error({ uploadResponse });
 
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `Failed to upload image: ${uploadResponse.status} - ${uploadResponse.statusText}`,
-          });
-        }
+      //     throw new TRPCError({
+      //       code: "INTERNAL_SERVER_ERROR",
+      //       message: `Failed to upload image: ${uploadResponse.status} - ${uploadResponse.statusText}`,
+      //     });
+      //   }
 
-        // record uploaded image
-        uploadedImages.push({
-          url: url.href,
-          size,
-          contentType,
-          filename,
-          fullFilename,
-        });
-      }
+      //   // record uploaded image
+      //   uploadedImages.push({
+      //     url: url.href,
+      //     size,
+      //     contentType,
+      //     filename,
+      //     fullFilename,
+      //   });
+      // }
 
-      // 3. save to database
-      const savedImages: string[] = [];
+      // // 3. save to database
+      // const savedImages: string[] = [];
 
-      for (const image of uploadedImages) {
-        const imageUrl = `${env.NEXT_PUBLIC_CLOUDFLARE_R2_URL}/${image.fullFilename}`;
+      // // TODO: 循环改到 语句内 传入数组 values
+      // // TODO：上传失败的重试处理
+      // // TODO：shape - aspect_ratio
+      // for (const image of uploadedImages) {
+      //   const imageUrl = `${env.NEXT_PUBLIC_CLOUDFLARE_R2_URL}/${image.fullFilename}`;
 
-        await ctx.db.insert(images).values({
-          clerkId: clerkId,
-          userId: user.id,
-          name: `${image.filename.split(".").shift()}_${Date.now()}`,
-          url: imageUrl,
-          displayStatus: "public",
-          size: BigInt(image.size),
-          uploadStatus: "completed",
-        });
+      //   await ctx.db.insert(images).values({
+      //     clerkId: clerkId,
+      //     userId: user.id,
+      //     name: `${image.filename.split(".").shift()}_${Date.now()}`,
+      //     url: imageUrl,
+      //     displayStatus: "public",
+      //     size: BigInt(image.size),
+      //     uploadStatus: "completed",
+      //   });
 
-        savedImages.push(imageUrl);
-      }
+      //   savedImages.push(imageUrl);
+      // }
 
       // 4. return image url
-      return savedImages;
-      // return [
-      //   "https://pub-7a337e316c9a498aafa764c221c1a7d8.r2.dev/user_2yHQq73CeeXmrNdZ9hFTin30zIK/tmpndy8osoq.jpg",
-      // ];
+      // return savedImages;
+      return [
+        "https://pub-7a337e316c9a498aafa764c221c1a7d8.r2.dev/user_2yHQq73CeeXmrNdZ9hFTin30zIK/tmpndy8osoq.jpg",
+      ];
     }),
 });
 

@@ -17,7 +17,6 @@ import { Progress } from "./ui/progress";
 interface TextToImagePreviewProps {
   className?: string;
   isLoading: boolean;
-  setIsLoading?: (isLoading: boolean) => void;
   generatedImageUrl?: string[];
   onRegenerate?: () => void;
 }
@@ -25,7 +24,6 @@ interface TextToImagePreviewProps {
 export default function TextToImagePreview({
   className,
   isLoading,
-  setIsLoading,
   generatedImageUrl,
   onRegenerate,
   ...props
@@ -140,6 +138,7 @@ const LoadingPreview = () => {
     }, 100);
 
     return () => clearInterval(timer);
+    // TODO: 依赖数组 放入 setStartTime 或 setProgress
   }, []);
 
   return (

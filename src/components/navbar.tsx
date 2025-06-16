@@ -18,6 +18,25 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 
+const navbarOptions: { href: string; label: string }[] = [
+  {
+    href: "/",
+    label: "Home",
+  },
+  {
+    href: "/examples",
+    label: "Examples",
+  },
+  {
+    href: "/text-to-image",
+    label: "Text to Image",
+  },
+  {
+    href: "/pricing",
+    label: "Pricing",
+  },
+];
+
 export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -32,7 +51,7 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
       </div>
 
       <div className="flex-1">
-        <NavbarNavigation />
+        <NavbarNavigation navigations={navbarOptions} />
       </div>
 
       {/* Auth */}
@@ -54,7 +73,9 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
 
           <SignedIn>
             <UserButton />
-            <Button variant={"default"}>Create Image</Button>
+            <Button variant={"default"} asChild>
+              <Link href="/text-to-image">Create Image</Link>
+            </Button>
           </SignedIn>
         </ClerkLoaded>
       </div>
@@ -62,25 +83,24 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-const NavbarNavigation = () => {
+const NavbarNavigation = ({
+  navigations,
+}: {
+  navigations: {
+    href: string;
+    label: string;
+  }[];
+}) => {
   return (
     <NavigationMenu>
       <NavigationMenuList>
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild>
-            <Link href="/">Home</Link>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild>
-            <Link href="/examples">Examples</Link>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild>
-            <Link href="/text-to-image">Text to Image</Link>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
+        {navigations.map((option) => (
+          <NavigationMenuItem key={option.href}>
+            <NavigationMenuLink asChild>
+              <Link href={option.href}>{option.label}</Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        ))}
       </NavigationMenuList>
     </NavigationMenu>
   );

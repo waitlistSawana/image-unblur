@@ -3,14 +3,20 @@
 import { toast } from "sonner";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
-import TextToImageForm, { textToImageFormSchema } from "./text-to-image-form";
+import TextToImageForm, {
+  type textToImageFormSchema,
+} from "./text-to-image-form";
 import TextToImagePreview from "./text-to-image-preview";
 import type z from "zod";
+import { useClerk } from "@clerk/nextjs";
 
 export default function TextToImage({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  // TODO: 增加 clerk 登录校验
+  const { openSignIn, isSignedIn } = useClerk();
+
   const {
     mutate: generateImgeKontextProMutate,
     data,
@@ -20,7 +26,7 @@ export default function TextToImage({
     onSuccess() {
       toast.success("Generate image successfully!");
     },
-    onError(error, variables, context) {
+    onError(error) {
       const code = error.data?.code;
       const message = error.message;
 
@@ -30,13 +36,17 @@ export default function TextToImage({
     },
   });
 
-  const testHandleSubmit = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 20000));
-  };
-
   const handleSubmit = async (
     values: z.infer<typeof textToImageFormSchema>,
   ) => {
+    // TODO: 增加 clerk 登录校验
+    // ask clerk docs ai:
+    // how to trigger sign-in model in useEffect. is there helper function could help me?
+    if (!isSignedIn) {
+      openSignIn();
+      return false;
+    }
+
     generateImgeKontextProMutate({
       prompt: values.prompt,
       input_image: values.input_image ?? null,

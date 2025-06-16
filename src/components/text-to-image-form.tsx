@@ -3,9 +3,8 @@
 import { cn } from "~/lib/utils";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dices, Loader2, Trash, Trash2 } from "lucide-react";
+import { Dices, Loader2, Trash } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -67,14 +66,12 @@ interface TextToImageFormProps {
   className?: string;
   isLoading: boolean;
   handleSubmit?: (values: z.infer<typeof textToImageFormSchema>) => void;
-  setIsLoading?: (isLoading: boolean) => void;
 }
 
 export default function TextToImageForm({
   className,
   handleSubmit,
   isLoading,
-  setIsLoading,
   ...props
 }: React.ComponentProps<"div"> & TextToImageFormProps) {
   const form = useForm<z.infer<typeof textToImageFormSchema>>({

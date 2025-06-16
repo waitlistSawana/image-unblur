@@ -27,6 +27,7 @@ const buttonVariants = cva(
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         icon: "size-9",
         huge: "h-12 rounded-md  px-6 has-[>svg]:px-4",
+        badge: "h-6 rounded-full px-2 has-[>svg]:px-1",
       },
     },
     defaultVariants: {
