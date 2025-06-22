@@ -26,12 +26,14 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "./ui/card";
+import CreditButton from "./credit-button";
 
 export const textToImageFormSchema = z.object({
   // 必填字段
@@ -101,6 +103,9 @@ export default function TextToImageForm({
               <CardDescription>
                 Generate an image from a text prompt.
               </CardDescription>
+              <CardAction>
+                <CreditButton />
+              </CardAction>
             </CardHeader>
             <CardContent className="w-full space-y-4">
               <FormField
@@ -114,6 +119,7 @@ export default function TextToImageForm({
                         placeholder="Type your prompt here..."
                         {...field}
                         className="min-h-24 w-full"
+                        autoComplete="on"
                         disabled={isLoading}
                       />
                     </FormControl>

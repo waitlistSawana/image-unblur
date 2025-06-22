@@ -14,8 +14,8 @@ export default function TextToImage({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  // TODO: 增加 clerk 登录校验
   const { openSignIn, isSignedIn } = useClerk();
+  const trpcUtils = api.useUtils();
 
   const {
     mutate: generateImgeKontextProMutate,
@@ -34,14 +34,14 @@ export default function TextToImage({
         description: message,
       });
     },
+    onSettled() {
+      void trpcUtils.credit.getUserCredit.invalidate();
+    },
   });
 
   const handleSubmit = async (
     values: z.infer<typeof textToImageFormSchema>,
   ) => {
-    // TODO: 增加 clerk 登录校验
-    // ask clerk docs ai:
-    // how to trigger sign-in model in useEffect. is there helper function could help me?
     if (!isSignedIn) {
       openSignIn();
       return false;

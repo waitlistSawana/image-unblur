@@ -3,6 +3,8 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { authRouter } from "./routers/auth";
 import { generateImageRouter } from "./routers/generateImage";
 import { cloudflareRouter } from "./routers/cloudflare";
+import { billingRouter } from "./routers/billing";
+import { creditRouter } from "./routers/credit";
 
 /**
  * This is the primary router for your server.
@@ -14,6 +16,8 @@ export const appRouter = createTRPCRouter({
   auth: authRouter,
   generateImage: generateImageRouter,
   cloudflare: cloudflareRouter,
+  billing: billingRouter,
+  credit: creditRouter,
 });
 
 // export type definition of API

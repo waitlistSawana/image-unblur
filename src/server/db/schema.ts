@@ -57,10 +57,12 @@ export const users = createTable(
     credit: d.integer().default(0),
     bonusCredit: d.integer().default(0),
     plan: planEnum().default("free"),
+    lastRefreshCredit: d.timestamp({ withTimezone: true }),
     // Stripe
     stripeCustomerId: d.varchar({ length: 256 }),
     stripeSubscriptionId: d.varchar({ length: 256 }),
     stripeSubscriptionCurrentPeriodEnd: d.timestamp({ withTimezone: true }),
+    stripeSubscriptionCycleAnchor: d.timestamp({ withTimezone: true }), // 订阅周期锚点
     stripePriceId: d.varchar({ length: 256 }),
     // timestamps
     createdAt: d

@@ -11,11 +11,12 @@ import { TabsContent } from "~/components/ui/tabs";
 import { cn } from "~/lib/utils";
 import PlanButton from "./plan-button";
 
-export default function PlanCard({
+export default async function PlanCard({
   planId,
   title,
   description,
   price,
+  priceId,
   currency,
   features,
   isPopular,
@@ -26,6 +27,10 @@ export default function PlanCard({
   price: {
     yearly: string | number;
     monthly: string | number;
+  };
+  priceId: {
+    yearly: string;
+    monthly: string;
   };
   currency: string;
   isPopular: boolean;
@@ -64,7 +69,20 @@ export default function PlanCard({
           <p className="text-sm opacity-80 md:text-base">/month</p>
         </div>
 
-        <PlanButton planId={planId} isPopular={isPopular} />
+        <TabsContent value="yearly">
+          <PlanButton
+            planId={planId}
+            isPopular={isPopular}
+            priceId={priceId.yearly}
+          />
+        </TabsContent>
+        <TabsContent value="monthly">
+          <PlanButton
+            planId={planId}
+            isPopular={isPopular}
+            priceId={priceId.monthly}
+          />
+        </TabsContent>
 
         <ul className="mt-6 space-y-2">
           {features.map((feature, index) => (

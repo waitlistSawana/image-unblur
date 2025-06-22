@@ -138,7 +138,6 @@ const LoadingPreview = () => {
     }, 100);
 
     return () => clearInterval(timer);
-    // TODO: 依赖数组 放入 setStartTime 或 setProgress
   }, []);
 
   return (

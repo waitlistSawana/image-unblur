@@ -17,6 +17,10 @@ const plansOptions = [
       yearly: "Free",
       monthly: "Free",
     },
+    priceId: {
+      yearly: "",
+      monthly: "",
+    },
     currency: "$",
     isPopular: false,
     features: [
@@ -46,6 +50,10 @@ const plansOptions = [
       yearly: 10,
       monthly: 12,
     },
+    priceId: {
+      yearly: "price_1RadNGQpTNcDfTEvqu3shD3L",
+      monthly: "price_1RadMSQpTNcDfTEv9X0ItblM",
+    },
     currency: "$",
     isPopular: true,
     features: [
@@ -74,6 +82,10 @@ const plansOptions = [
     price: {
       yearly: 25,
       monthly: 30,
+    },
+    priceId: {
+      yearly: "price_1RadOTQpTNcDfTEvZdWyGbxs",
+      monthly: "price_1RadO6QpTNcDfTEvKTREJ94t",
     },
     currency: "$",
     isPopular: false,
@@ -118,7 +130,10 @@ export default function PricingSubscription({
     <div className={cn("", className)} {...props}>
       <Tabs defaultValue="yearly" className="gap-6 lg:gap-10">
         <TabsList className="mx-auto grid grid-cols-2">
-          <TabsTrigger value="yearly" className="flex gap-4 px-4 py-2 text-lg">
+          <TabsTrigger
+            value="yearly"
+            className="flex cursor-pointer gap-4 px-4 py-2 text-lg"
+          >
             Yearly
             <p
               className={cn(
@@ -129,7 +144,10 @@ export default function PricingSubscription({
               -16.66%
             </p>
           </TabsTrigger>
-          <TabsTrigger value="monthly" className="px-4 py-2 text-lg">
+          <TabsTrigger
+            value="monthly"
+            className="cursor-pointer px-4 py-2 text-lg"
+          >
             Monthly
           </TabsTrigger>
         </TabsList>

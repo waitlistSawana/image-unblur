@@ -7,10 +7,13 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    DATABASE_URL: z.string().url(),
+    // Base
+    BASE_URL: z.string().url(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    // Database
+    DATABASE_URL: z.string().url(),
     // Clerk
     CLERK_SECRET_KEY: z.string().min(1),
     // Replicate
@@ -19,6 +22,9 @@ export const env = createEnv({
     CLOUDFLARE_R2_ACCOUNT_ID: z.string().min(1),
     CLOUDFLARE_R2_ACCESS_KEY_ID: z.string().min(1),
     CLOUDFLARE_R2_SECRET_ACCESS_KEY: z.string().min(1),
+    // Stripe
+    STRIPE_SECRET_KEY: z.string().min(1),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1),
   },
 
   /**
@@ -27,7 +33,8 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    // Base
+    NEXT_PUBLIC_BASE_URL: z.string().url(),
     // Clerk
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
     // Clerk 重定向 URLs
@@ -37,6 +44,21 @@ export const env = createEnv({
     NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: z.string().default("/"),
     // Cloudflare
     NEXT_PUBLIC_CLOUDFLARE_R2_URL: z.string().url(),
+    // Stripe
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+    // Stripe - Plans Price Ids
+    NEXT_PUBLIC_STRIPE_PLAN_BASIC_MONTHLY: z
+      .string()
+      .min(1)
+      .startsWith("price_"),
+    NEXT_PUBLIC_STRIPE_PLAN_BASIC_YEARLY: z
+      .string()
+      .min(1)
+      .startsWith("price_"),
+    NEXT_PUBLIC_STRIPE_PLAN_PRO_MONTHLY: z.string().min(1).startsWith("price_"),
+    NEXT_PUBLIC_STRIPE_PLAN_PRO_YEARLY: z.string().min(1).startsWith("price_"),
+    // Stripe - Packages Price Ids
+    NEXT_PUBLIC_STRIPE_PACK_TRIAL_PACK: z.string().min(1).startsWith("price_"),
   },
 
   /**
@@ -44,8 +66,12 @@ export const env = createEnv({
    * middlewares) or client-side so we need to destruct manually.
    */
   runtimeEnv: {
-    DATABASE_URL: process.env.DATABASE_URL,
+    // Base
+    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+    BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NODE_ENV: process.env.NODE_ENV,
+    // Database
+    DATABASE_URL: process.env.DATABASE_URL,
     // Clerk
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
@@ -65,6 +91,23 @@ export const env = createEnv({
     CLOUDFLARE_R2_SECRET_ACCESS_KEY:
       process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
     NEXT_PUBLIC_CLOUDFLARE_R2_URL: process.env.NEXT_PUBLIC_CLOUDFLARE_R2_URL,
+    // Stripe
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    // Stripe - Plans Price Ids
+    NEXT_PUBLIC_STRIPE_PLAN_BASIC_MONTHLY:
+      process.env.NEXT_PUBLIC_STRIPE_PLAN_BASIC_MONTHLY,
+    NEXT_PUBLIC_STRIPE_PLAN_BASIC_YEARLY:
+      process.env.NEXT_PUBLIC_STRIPE_PLAN_BASIC_YEARLY,
+    NEXT_PUBLIC_STRIPE_PLAN_PRO_MONTHLY:
+      process.env.NEXT_PUBLIC_STRIPE_PLAN_PRO_MONTHLY,
+    NEXT_PUBLIC_STRIPE_PLAN_PRO_YEARLY:
+      process.env.NEXT_PUBLIC_STRIPE_PLAN_PRO_YEARLY,
+    // Stripe - Packages Price Ids
+    NEXT_PUBLIC_STRIPE_PACK_TRIAL_PACK:
+      process.env.NEXT_PUBLIC_STRIPE_PACK_TRIAL_PACK,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
