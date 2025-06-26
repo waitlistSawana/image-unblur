@@ -1,6 +1,6 @@
 import TextToImage from "~/components/text-to-image";
 
-export default function TextToImagePage() {
+export default async function TextToImagePage() {
   return (
     <div id="TextToImagePage">
       <div className="flex flex-col items-center justify-center gap-6 py-10 text-center">

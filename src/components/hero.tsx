@@ -28,7 +28,7 @@ export default function Hero({
       </p>
       <div className="mx-auto grid grid-cols-2 gap-6 text-center">
         <Button variant={"outline"} size={"huge"} asChild>
-          <Link href={"/examples"}>Examples</Link>
+          <Link href={"/pricing"}>Pricing</Link>
         </Button>
         <Button variant={"default"} size={"huge"} asChild>
           <Link href={"/text-to-image"}>生成图片</Link>
