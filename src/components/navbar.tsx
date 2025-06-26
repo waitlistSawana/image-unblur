@@ -72,7 +72,9 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
           </SignedOut>
 
           <SignedIn>
-            <UserButton />
+            <div className="flex flex-row items-center justify-center">
+              <UserButton />
+            </div>
             <Button variant={"default"} asChild>
               <Link href="/text-to-image">Create Image</Link>
             </Button>

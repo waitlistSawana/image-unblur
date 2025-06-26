@@ -105,15 +105,17 @@ const DefaultPreview = () => {
 
 const LoadingPreview = () => {
   const [progress, setProgress] = useState(0);
-  const [startTime, setStartTime] = useState(Date.now());
+  // to avoid useEffect missing dependency
+  // const [startTime, setStartTime] = useState(Date.now());
 
   useEffect(() => {
-    setStartTime(Date.now());
+    const initialTime = Date.now();
+    // setStartTime(initialTime);
     setProgress(3); // Start at 3%
 
     const updateProgress = () => {
       const currentTime = Date.now();
-      const elapsedSeconds = (currentTime - startTime) / 1000;
+      const elapsedSeconds = (currentTime - initialTime) / 1000;
 
       if (elapsedSeconds < 1) {
         // First second: stay at 3%

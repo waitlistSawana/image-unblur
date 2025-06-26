@@ -102,6 +102,7 @@ export default function CreditButton({
       type="button"
       variant="outline"
       className={cn("", className)}
+      onClick={() => refetch()}
       {...props}
     >
       <Coins className="h-4 w-4" />
