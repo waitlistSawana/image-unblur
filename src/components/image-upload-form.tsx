@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, RotateCcw, Upload, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
-import { v4 } from "uuid";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -52,7 +51,7 @@ export default function ImageUploadForm({
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  
+
   // 获取上传URL的mutation
   const getUploadUrl = api.cloudflare.getUploadPresignedUrl.useMutation();
 
@@ -71,34 +70,33 @@ export default function ImageUploadForm({
       }
     }
   };
-  
+
   // 上传文件到R2并获取公共URL
   const uploadFileToR2 = async (file: File): Promise<string> => {
     setIsUploading(true);
     setUploadProgress(10);
-    
+
     try {
       // 生成唯一文件名，添加时间戳以便后续清理（10分钟后自动过期）
       const timestamp = Date.now();
-      // 生成唯一ID并截取前8位
-      const id = v4();
-      const uniqueId = id.split("-")[0] || "temp";
+      // 生成唯一ID
+      const uniqueId = Math.random().toString(36).substring(2, 10);
       const extension = file.name.split(".").pop() ?? "jpg";
       const filename = `uploads/${timestamp}-${uniqueId}.${extension}`;
-      
+
       // 获取预签名URL
       setUploadProgress(20);
       const result = await getUploadUrl.mutateAsync({
         filename,
       });
-      
+
       const presignedUrl = result;
       if (!presignedUrl) {
         throw new Error("Failed to get upload URL");
       }
-      
+
       setUploadProgress(30);
-      
+
       // 上传文件到Cloudflare R2
       const response = await fetch(presignedUrl, {
         method: "PUT",
@@ -111,13 +109,13 @@ export default function ImageUploadForm({
       if (!response.ok) {
         throw new Error("Failed to upload image");
       }
-      
+
       setUploadProgress(80);
 
       // 构建公共访问URL
       const r2PublicUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_URL ?? "";
       const publicUrl = `${r2PublicUrl}/${filename}`;
-      
+
       setUploadProgress(100);
       return publicUrl;
     } catch (error) {
@@ -148,11 +146,11 @@ export default function ImageUploadForm({
       const url = URL.createObjectURL(file);
       setUploadedFile(file);
       setPreviewUrl(url);
-      
+
       try {
         // 立即上传文件到R2并获取URL
         const publicUrl = await uploadFileToR2(file);
-        
+
         // 将R2 URL设置到表单中
         form.setValue("image_url", publicUrl);
         form.clearErrors("image_url");
@@ -273,10 +271,10 @@ export default function ImageUploadForm({
                 {/* Upload Progress */}
                 {isUploading && uploadProgress > 0 && (
                   <div className="w-full space-y-1">
-                    <div className="text-xs text-muted-foreground text-center">
+                    <div className="text-muted-foreground text-center text-xs">
                       Uploading image... {uploadProgress}%
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                    <div className="h-1.5 w-full rounded-full bg-gray-200">
                       <div
                         className="bg-primary h-1.5 rounded-full"
                         style={{ width: `${uploadProgress}%` }}

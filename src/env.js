@@ -22,7 +22,6 @@ export const env = createEnv({
     CLOUDFLARE_R2_ACCOUNT_ID: z.string().min(1),
     CLOUDFLARE_R2_ACCESS_KEY_ID: z.string().min(1),
     CLOUDFLARE_R2_SECRET_ACCESS_KEY: z.string().min(1),
-    CLOUDFLARE_R2_BUCKET_NAME: z.string().min(1),
     R2_PUBLIC_URL: z.string().url().optional(),
     // Stripe
     STRIPE_SECRET_KEY: z.string().min(1),
@@ -92,7 +91,6 @@ export const env = createEnv({
     CLOUDFLARE_R2_ACCESS_KEY_ID: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
     CLOUDFLARE_R2_SECRET_ACCESS_KEY:
       process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-    CLOUDFLARE_R2_BUCKET_NAME: process.env.CLOUDFLARE_R2_BUCKET_NAME,
     R2_PUBLIC_URL: process.env.R2_PUBLIC_URL,
     NEXT_PUBLIC_CLOUDFLARE_R2_URL: process.env.NEXT_PUBLIC_CLOUDFLARE_R2_URL,
     // Stripe
