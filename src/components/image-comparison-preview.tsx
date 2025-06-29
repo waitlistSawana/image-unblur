@@ -26,7 +26,7 @@ interface ImageComparisonPreviewProps {
   isLoading: boolean;
   originalImageUrl?: string;
   processedImageUrl?: string;
-  status?: "processing" | "completed" | "failed";
+  status?: "idle" | "processing" | "completed" | "failed";
   showComparison?: boolean;
   isDownloading?: boolean;
 }
@@ -85,6 +85,7 @@ export default function ImageComparisonPreview({
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case "failed":
         return <XCircle className="h-5 w-5 text-red-500" />;
+      case "idle":
       default:
         return null;
     }
@@ -102,6 +103,7 @@ export default function ImageComparisonPreview({
         return "Image processing completed!";
       case "failed":
         return "Image processing failed";
+      case "idle":
       default:
         return "Upload an image to get started";
     }
@@ -148,6 +150,23 @@ export default function ImageComparisonPreview({
                     src={originalImageUrl}
                     alt="Original blurry image"
                     className="bg-muted max-h-64 w-full rounded-lg border object-contain"
+                    onLoad={() =>
+                      console.log(
+                        "Original image loaded successfully:",
+                        originalImageUrl,
+                      )
+                    }
+                    onError={(e) => {
+                      console.error(
+                        "Error loading original image:",
+                        originalImageUrl,
+                      );
+                      // 尝试添加时间戳避免缓存问题
+                      const imgElement = e.target as HTMLImageElement;
+                      if (!imgElement.src.includes("?")) {
+                        imgElement.src = `${originalImageUrl}?t=${Date.now()}`;
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -183,7 +202,31 @@ export default function ImageComparisonPreview({
                       src={processedImageUrl}
                       alt="Processed clear image"
                       className="bg-muted max-h-64 w-full rounded-lg border object-contain"
+                      onLoad={() =>
+                        console.log(
+                          "Processed image loaded successfully:",
+                          processedImageUrl,
+                        )
+                      }
+                      onError={(e) => {
+                        console.error(
+                          "Error loading processed image:",
+                          processedImageUrl,
+                        );
+                        // 尝试添加时间戳避免缓存问题
+                        const imgElement = e.target as HTMLImageElement;
+                        if (!imgElement.src.includes("?")) {
+                          imgElement.src = `${processedImageUrl}?t=${Date.now()}`;
+                        }
+                      }}
                     />
+                    {/* 添加图片URL信息，方便调试 */}
+                    <div className="mt-1 text-xs break-all text-gray-500">
+                      <details>
+                        <summary>Image URL (click to view)</summary>
+                        {processedImageUrl}
+                      </details>
+                    </div>
                   </div>
                 </div>
               ) : status === "processing" ? (

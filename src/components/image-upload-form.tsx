@@ -27,8 +27,36 @@ import {
   CardTitle,
 } from "./ui/card";
 
+// 定义支持的图片类型
+type SupportedImageType = "image/jpeg" | "image/png" | "image/webp";
+const SUPPORTED_IMAGE_TYPES: SupportedImageType[] = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 export const imageUploadFormSchema = z.object({
-  image_url: z.string().url("Please enter a valid image URL"),
+  image_url: z
+    .string()
+    .url("Please enter a valid image URL")
+    .refine(
+      (url) => {
+        // 检查URL是否以常见图片扩展名结尾
+        const lowerUrl = url.toLowerCase();
+        return (
+          lowerUrl.endsWith(".jpg") ||
+          lowerUrl.endsWith(".jpeg") ||
+          lowerUrl.endsWith(".png") ||
+          lowerUrl.endsWith(".webp") ||
+          // 允许带查询参数的URL
+          /\.(jpg|jpeg|png|webp)(\?|$)/.test(lowerUrl)
+        );
+      },
+      {
+        message: "URL must point to a supported image type (JPG, PNG, WebP)",
+      },
+    ),
 });
 
 interface ImageUploadFormProps {
@@ -55,7 +83,8 @@ export default function ImageUploadForm({
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
 
   // 使用上传文件的mutation
-  const uploadFileMutation = api.cloudflare.uploadFile.useMutation();
+  const getUploadUrlMutation =
+    api.cloudflare.getUploadPresignedUrl.useMutation();
 
   const form = useForm<z.infer<typeof imageUploadFormSchema>>({
     resolver: zodResolver(imageUploadFormSchema),
@@ -74,111 +103,117 @@ export default function ImageUploadForm({
   };
 
   // 上传文件到R2并获取公共URL
-  const uploadFileToR2 = async (file: File): Promise<string> => {
-    setIsUploading(true);
-    setUploadProgress(10);
-    setErrorDetails(null);
-
-    try {
-      // 检查文件大小
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error("File size exceeds 10MB limit");
-      }
-
-      // 生成唯一文件名，添加时间戳以便后续清理（10分钟后自动过期）
-      const timestamp = Date.now();
-      // 生成唯一ID
-      const uniqueId = Math.random().toString(36).substring(2, 10);
-      const extension = file.name.split(".").pop() ?? "jpg";
-      const filename = `uploads/${timestamp}-${uniqueId}.${extension}`;
-
-      setUploadProgress(20);
-      // toast.info("Preparing file for upload...");
-
-      // 将文件转换为base64
-      const fileContent = await readFileAsBase64(file);
-      if (!fileContent) {
-        throw new Error("Failed to read file content");
-      }
-
-      setUploadProgress(40);
-      // toast.info("Uploading file to server...");
-      console.log("Uploading file to server:", filename);
+  const uploadFileToR2 = useCallback(
+    async (file: File): Promise<string> => {
+      setIsUploading(true);
+      setUploadProgress(10);
+      setErrorDetails(null);
 
       try {
-        // 通过服务器上传文件
-        const publicUrl = await uploadFileMutation.mutateAsync({
-          filename,
-          fileContent,
-          contentType: file.type,
-        });
-
-        console.log("Upload successful, public URL:", publicUrl);
-
-        setUploadProgress(100);
-        toast.success("File successfully uploaded!");
-        return publicUrl;
-      } catch (uploadError) {
-        console.error("Error uploading file:", uploadError);
-        if (uploadError instanceof Error) {
-          setErrorDetails(uploadError.message);
-          toast.error(`Upload error: ${uploadError.message}`);
-        } else {
-          setErrorDetails("Unknown upload error");
-          toast.error("Upload error: Unknown error occurred");
+        // 检查文件大小
+        if (file.size > MAX_FILE_SIZE) {
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          throw new Error(`File size (${fileSizeMB}MB) exceeds 10MB limit`);
         }
-        throw uploadError;
-      }
-    } catch (error) {
-      console.error("Upload process error:", error);
-      if (error instanceof Error) {
-        setErrorDetails(error.message);
-        form.setError("image_url", {
-          type: "manual",
-          message: error.message,
-        });
-        toast.error(`Upload failed: ${error.message}`);
-      } else {
-        setErrorDetails("Unknown error");
-        form.setError("image_url", {
-          type: "manual",
-          message: "Failed to upload image",
-        });
-        toast.error("Upload failed: Unknown error");
-      }
-      throw error;
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
-  };
 
-  // 将文件读取为base64
-  const readFileAsBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-        } else {
-          reject(new Error("Failed to read file as base64"));
+        // 生成唯一文件名，添加时间戳以便后续清理（10分钟后自动过期）
+        const timestamp = Date.now();
+        // 生成唯一ID
+        const uniqueId = Math.random().toString(36).substring(2, 10);
+        const extension = file.name.split(".").pop() ?? "jpg";
+        const filename = `uploads/${timestamp}-${uniqueId}.${extension}`;
+
+        setUploadProgress(20);
+        toast.info("Preparing file for upload...");
+
+        try {
+          // 1. 获取预签名URL
+          const result = await getUploadUrlMutation.mutateAsync({
+            filename,
+            contentType: file.type,
+          });
+
+          const presignedUrl = result.presignedUrl;
+          const publicUrl = result.publicUrl;
+
+          setUploadProgress(40);
+          toast.info("Uploading file to storage...");
+          console.log("Uploading file to R2:", filename);
+
+          // 2. 使用预签名URL直接上传文件
+          const uploadResponse = await fetch(presignedUrl, {
+            method: "PUT",
+            body: file,
+            headers: {
+              "Content-Type": file.type,
+            },
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error(
+              `Upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`,
+            );
+          }
+
+          console.log("Upload successful, public URL:", publicUrl);
+
+          setUploadProgress(100);
+          toast.success("File successfully uploaded!");
+          return publicUrl;
+        } catch (uploadError) {
+          console.error("Error uploading file:", uploadError);
+          if (uploadError instanceof Error) {
+            setErrorDetails(uploadError.message);
+            toast.error(`Upload error: ${uploadError.message}`);
+          } else {
+            setErrorDetails("Unknown upload error");
+            toast.error("Upload error: Unknown error occurred");
+          }
+          throw uploadError;
         }
-      };
-      reader.onerror = () => {
-        reject(new Error(reader.error?.message ?? "Error reading file"));
-      };
-      reader.readAsDataURL(file);
-    });
-  };
+      } catch (error) {
+        console.error("Upload process error:", error);
+        if (error instanceof Error) {
+          setErrorDetails(error.message);
+          form.setError("image_url", {
+            type: "manual",
+            message: error.message,
+          });
+          toast.error(`Upload failed: ${error.message}`);
+        } else {
+          setErrorDetails("Unknown error");
+          form.setError("image_url", {
+            type: "manual",
+            message: "Failed to upload image",
+          });
+          toast.error("Upload failed: Unknown error");
+        }
+        throw error;
+      } finally {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }
+    },
+    [
+      form,
+      getUploadUrlMutation,
+      setIsUploading,
+      setUploadProgress,
+      setErrorDetails,
+    ],
+  );
 
   const handleFileUpload = useCallback(
     async (file: File) => {
-      if (!file.type.startsWith("image/")) {
+      // 验证文件类型
+      if (!SUPPORTED_IMAGE_TYPES.includes(file.type as SupportedImageType)) {
         form.setError("image_url", {
           type: "manual",
-          message: "Please select a valid image file",
+          message: "Please select a valid image file (JPEG, PNG, or WebP)",
         });
-        toast.error("Invalid file type. Please select an image file.");
+        toast.error(
+          "Invalid file type. Please select a JPEG, PNG, or WebP file.",
+        );
         return;
       }
 
@@ -188,7 +223,6 @@ export default function ImageUploadForm({
       setPreviewUrl(url);
 
       try {
-        // toast.info(`Uploading ${file.name}...`);
         // 立即上传文件到R2并获取URL
         const publicUrl = await uploadFileToR2(file);
 
@@ -200,7 +234,7 @@ export default function ImageUploadForm({
         console.error("Error uploading file:", error);
       }
     },
-    [form],
+    [form, uploadFileToR2],
   );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -295,7 +329,7 @@ export default function ImageUploadForm({
                     type="file"
                     className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
                     onChange={handleFileSelect}
-                    accept="image/*"
+                    accept="image/jpeg, image/png, image/webp"
                     disabled={isFormDisabled}
                   />
 
@@ -306,7 +340,7 @@ export default function ImageUploadForm({
                       drag and drop
                     </div>
                     <div className="text-muted-foreground text-xs">
-                      PNG, JPG, GIF up to 10MB
+                      PNG, JPG, WebP up to 10MB
                     </div>
                   </div>
                 </div>

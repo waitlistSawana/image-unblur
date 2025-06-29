@@ -1,9 +1,9 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
+import Link from "next/link";
 import { cn } from "~/lib/utils";
 import { Button } from "./ui/button";
-import Link from "next/link";
-import { Sparkles, Zap, ArrowRight } from "lucide-react";
 
 interface ModernHeroProps {
   className?: string;
@@ -36,12 +36,10 @@ export default function ModernHero({
         <div className="space-y-8 text-center">
           {/* Badge */}
           <div className="flex justify-center">
-            <Link href="https://same.new/chat/clone-httpsgithub-comwaitlistsawanaimage-unblur-6k7n6vcyae5">
-              <Button className="cursor-pointer border-white/30 bg-white/20 text-white transition-all duration-300 hover:bg-white/25">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Same.new Chat Link
-              </Button>
-            </Link>
+            <Button className="cursor-pointer border-white/30 bg-white/20 text-white transition-all duration-300 hover:bg-white/25">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Try AI Deblur
+            </Button>
           </div>
 
           {/* Main title */}

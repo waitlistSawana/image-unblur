@@ -27,17 +27,42 @@ export const cloudflareRouter = createTRPCRouter({
     }),
 
   getUploadPresignedUrl: publicProcedure
-    .input(z.object({ filename: z.string() }))
+    .input(
+      z.object({
+        filename: z.string(),
+        contentType: z.string().optional(),
+      }),
+    )
     .mutation(async ({ input }) => {
-      const { filename } = input;
+      const { filename, contentType } = input;
 
-      const url = await getSignedUrl(
-        S3,
-        new PutObjectCommand({ Bucket: BUCKET_NAME, Key: filename }),
-        { expiresIn: 60 * 10 },
-      );
+      // 创建带有可选contentType的PutObjectCommand
+      const putCommand = {
+        Bucket: BUCKET_NAME,
+        Key: filename,
+        ...(contentType && { ContentType: contentType }),
+      };
 
-      return url;
+      const url = await getSignedUrl(S3, new PutObjectCommand(putCommand), {
+        expiresIn: 60 * 10,
+      });
+
+      // 构建公共访问URL
+      const r2PublicUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_URL;
+      if (!r2PublicUrl) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Missing R2 public URL in environment variables",
+        });
+      }
+
+      const publicUrl = `${r2PublicUrl}/${filename}`;
+
+      // 返回预签名URL和公共URL
+      return {
+        presignedUrl: url,
+        publicUrl: publicUrl,
+      };
     }),
 
   uploadFile: publicProcedure

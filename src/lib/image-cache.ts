@@ -20,25 +20,49 @@ export async function downloadAndCacheImage(
   imageUrl: string,
   cacheKey: string,
 ): Promise<string> {
+  console.log(
+    `Attempting to download and cache image: ${imageUrl} with key: ${cacheKey}`,
+  );
+
   try {
     // 检查是否已经缓存且未过期
     const cached = imageCache.get(cacheKey);
     if (cached && Date.now() < cached.expiresAt) {
+      console.log(`Using cached image for key: ${cacheKey}`);
       return cached.blobUrl;
     }
+
+    console.log(`Fetching image from: ${imageUrl}`);
 
     // 下载图片
     const response = await fetch(imageUrl, {
       mode: "cors",
       credentials: "omit",
+      headers: {
+        // 某些服务可能需要这些头
+        Accept: "image/*",
+        "Cache-Control": "no-cache",
+      },
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to download image: ${response.statusText}`);
+      console.error(
+        `Failed to download image: ${response.status} ${response.statusText}`,
+      );
+      throw new Error(
+        `Failed to download image: ${response.status} ${response.statusText}`,
+      );
     }
 
+    console.log(
+      `Image downloaded successfully, content-type: ${response.headers.get("content-type")}`,
+    );
+
     const blob = await response.blob();
+    console.log(`Blob created: ${blob.size} bytes, type: ${blob.type}`);
+
     const blobUrl = URL.createObjectURL(blob);
+    console.log(`Blob URL created: ${blobUrl}`);
 
     // 缓存图片（设置24小时过期）
     const cachedImage: CachedImage = {
@@ -50,14 +74,20 @@ export async function downloadAndCacheImage(
 
     // 清理旧的 blob URL
     if (cached) {
+      console.log(`Revoking old blob URL for key: ${cacheKey}`);
       URL.revokeObjectURL(cached.blobUrl);
     }
 
     imageCache.set(cacheKey, cachedImage);
+    console.log(`Image cached successfully for key: ${cacheKey}`);
 
     return blobUrl;
   } catch (error) {
     console.error("Failed to download and cache image:", error);
+
+    // 尝试直接使用原始URL
+    console.log(`Falling back to original URL: ${imageUrl}`);
+
     // 如果下载失败，返回原始 URL
     return imageUrl;
   }

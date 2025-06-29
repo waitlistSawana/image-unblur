@@ -42,6 +42,35 @@ const handleApiError = async (
   operation: string,
 ): Promise<never> => {
   let errorMessage = response.statusText;
+  let errorCode: TRPCError["code"] = "INTERNAL_SERVER_ERROR";
+
+  // 根据HTTP状态码映射到TRPC错误代码
+  switch (response.status) {
+    case 400:
+      errorCode = "BAD_REQUEST";
+      break;
+    case 401:
+      errorCode = "UNAUTHORIZED";
+      break;
+    case 403:
+      errorCode = "FORBIDDEN";
+      break;
+    case 404:
+      errorCode = "NOT_FOUND";
+      break;
+    case 429:
+      errorCode = "TOO_MANY_REQUESTS";
+      break;
+    case 500:
+    case 502:
+    case 503:
+    case 504:
+      errorCode = "INTERNAL_SERVER_ERROR";
+      break;
+    default:
+      // 默认使用INTERNAL_SERVER_ERROR
+      errorCode = "INTERNAL_SERVER_ERROR";
+  }
 
   try {
     const errorText = await response.text();
@@ -57,8 +86,12 @@ const handleApiError = async (
     // 如果读取响应体失败，继续使用状态文本
   }
 
+  console.error(
+    `API Error (${response.status} ${response.statusText}): ${errorMessage}`,
+  );
+
   throw new TRPCError({
-    code: "INTERNAL_SERVER_ERROR",
+    code: errorCode,
     message: `Failed to ${operation}: ${errorMessage}`,
   });
 };
@@ -183,6 +216,14 @@ export const imageDeblurRouter = createTRPCRouter({
     .input(z.object({ requestId: z.string() }))
     .query(async ({ input }) => {
       try {
+        // 检查requestId是否为空
+        if (!input.requestId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Request ID is required",
+          });
+        }
+
         // Get result from MagicAPI
         const result = await getDeblurResult(input.requestId);
 
