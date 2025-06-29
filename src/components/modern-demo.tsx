@@ -44,7 +44,7 @@ export default function ModernDemo({
 
     // Simulate processing
     const interval = setInterval(() => {
-      setProgress(prev => {
+      setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setIsProcessing(false);
@@ -64,51 +64,54 @@ export default function ModernDemo({
   return (
     <section
       id="demo"
-      className={cn(
-        "py-24 bg-muted/30 relative",
-        className,
-      )}
+      className={cn("bg-muted/30 relative py-24", className)}
       {...props}
     >
       <div className="container mx-auto px-6">
         {/* Section header */}
-        <div className="text-center mb-16">
-          <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
+        <div className="mb-16 text-center">
+          <Badge className="bg-primary/10 text-primary border-primary/20 mb-4">
             Try It Now
           </Badge>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+          <h2 className="mb-6 text-4xl font-bold md:text-5xl lg:text-6xl">
             See the Magic in
-            <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent"> Action</span>
+            <span className="from-primary bg-gradient-to-r to-purple-600 bg-clip-text text-transparent">
+              {" "}
+              Action
+            </span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Upload a blurry image and watch our AI transform it into crystal clear perfection
+          <p className="text-muted-foreground mx-auto max-w-3xl text-xl">
+            Upload a blurry image and watch our AI transform it into crystal
+            clear perfection
           </p>
         </div>
 
         {/* Demo interface */}
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-
+        <div className="mx-auto max-w-6xl">
+          <div className="grid items-center gap-8 lg:grid-cols-2">
             {/* Upload area */}
             <Card className="relative overflow-hidden">
               <CardContent className="p-0">
                 <div
                   className={cn(
-                    "relative aspect-video bg-gradient-to-br from-muted to-muted/50 border-2 border-dashed transition-all duration-300 flex items-center justify-center",
+                    "from-muted to-muted/50 relative flex aspect-video items-center justify-center border-2 border-dashed bg-gradient-to-br transition-all duration-300",
                     isDragOver && "border-primary bg-primary/5",
-                    isComplete && "border-green-500 bg-green-50 dark:bg-green-950"
+                    isComplete &&
+                      "border-green-500 bg-green-50 dark:bg-green-950",
                   )}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
                   {!isComplete ? (
-                    <div className="text-center p-8">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Upload className="w-8 h-8 text-primary" />
+                    <div className="p-8 text-center">
+                      <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                        <Upload className="text-primary h-8 w-8" />
                       </div>
-                      <h3 className="font-semibold mb-2">Upload Your Blurry Image</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
+                      <h3 className="mb-2 font-semibold">
+                        Upload Your Blurry Image
+                      </h3>
+                      <p className="text-muted-foreground mb-4 text-sm">
                         Drag and drop or click to select
                       </p>
                       <Button
@@ -116,17 +119,19 @@ export default function ModernDemo({
                         onClick={startDemo}
                         disabled={isProcessing}
                       >
-                        <Image className="w-4 h-4 mr-2" />
+                        <Image className="mr-2 h-4 w-4" />
                         Try Demo Image
                       </Button>
                     </div>
                   ) : (
-                    <div className="text-center p-8">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                        <CheckCircle className="w-8 h-8 text-green-600" />
+                    <div className="p-8 text-center">
+                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                        <CheckCircle className="h-8 w-8 text-green-600" />
                       </div>
-                      <h3 className="font-semibold mb-2">Processing Complete!</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
+                      <h3 className="mb-2 font-semibold">
+                        Processing Complete!
+                      </h3>
+                      <p className="text-muted-foreground mb-4 text-sm">
                         Your image has been enhanced
                       </p>
                       <Button onClick={resetDemo} variant="outline">
@@ -137,13 +142,15 @@ export default function ModernDemo({
 
                   {/* Processing overlay */}
                   {isProcessing && (
-                    <div className="absolute inset-0 bg-background/90 flex items-center justify-center">
-                      <div className="text-center space-y-4">
-                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                    <div className="bg-background/90 absolute inset-0 flex items-center justify-center">
+                      <div className="space-y-4 text-center">
+                        <div className="border-primary mx-auto h-12 w-12 animate-spin rounded-full border-4 border-t-transparent" />
                         <div className="space-y-2">
                           <p className="font-medium">AI Processing...</p>
                           <Progress value={progress} className="w-64" />
-                          <p className="text-sm text-muted-foreground">{Math.round(progress)}% complete</p>
+                          <p className="text-muted-foreground text-sm">
+                            {Math.round(progress)}% complete
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -154,35 +161,37 @@ export default function ModernDemo({
 
             {/* Arrow */}
             <div className="flex justify-center lg:justify-start">
-              <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center">
-                <ArrowRight className="w-8 h-8 text-primary-foreground" />
+              <div className="bg-primary flex h-16 w-16 items-center justify-center rounded-full">
+                <ArrowRight className="text-primary-foreground h-8 w-8" />
               </div>
             </div>
 
             {/* Result area */}
             <Card className="relative overflow-hidden">
               <CardContent className="p-0">
-                <div className="relative aspect-video bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950 flex items-center justify-center">
+                <div className="relative flex aspect-video items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
                   {isComplete ? (
-                    <div className="text-center p-8">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                        <CheckCircle className="w-8 h-8 text-green-600" />
+                    <div className="p-8 text-center">
+                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                        <CheckCircle className="h-8 w-8 text-green-600" />
                       </div>
-                      <h3 className="font-semibold mb-2">Crystal Clear Result</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
+                      <h3 className="mb-2 font-semibold">
+                        Crystal Clear Result
+                      </h3>
+                      <p className="text-muted-foreground mb-4 text-sm">
                         Amazing detail restoration
                       </p>
-                      <div className="flex gap-2 justify-center">
+                      <div className="flex justify-center gap-2">
                         <Badge variant="secondary">HD Quality</Badge>
                         <Badge variant="secondary">Original Size</Badge>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center p-8 text-muted-foreground">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                        <Image className="w-8 h-8" />
+                    <div className="text-muted-foreground p-8 text-center">
+                      <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                        <Image className="h-8 w-8" />
                       </div>
-                      <h3 className="font-medium mb-2">Enhanced Result</h3>
+                      <h3 className="mb-2 font-medium">Enhanced Result</h3>
                       <p className="text-sm">
                         Your processed image will appear here
                       </p>
@@ -194,18 +203,18 @@ export default function ModernDemo({
           </div>
 
           {/* CTA */}
-          <div className="text-center mt-12">
+          <div className="mt-12 text-center">
             <Button
               size="lg"
-              className="bg-[var(--color-accent-orange)] hover:bg-[var(--color-accent-orange)]/90 text-white text-lg px-8 py-6 h-auto"
+              className="h-auto bg-[var(--color-accent-orange)] px-8 py-6 text-lg text-white hover:bg-[var(--color-accent-orange)]/90"
               asChild
             >
               <a href="/image-deblur">
                 Get Started for Free
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </a>
             </Button>
-            <p className="text-sm text-muted-foreground mt-3">
+            <p className="text-muted-foreground mt-3 text-sm">
               No registration required • Process up to 3 images free
             </p>
           </div>

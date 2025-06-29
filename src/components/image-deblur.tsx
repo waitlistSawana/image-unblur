@@ -15,7 +15,7 @@ interface DeblurResult {
   original_url: string;
   processed_url?: string;
   local_processed_url?: string; // 本地缓存的 blob URL
-  status: 'processing' | 'completed' | 'failed';
+  status: "processing" | "completed" | "failed";
   isDownloading?: boolean; // 是否正在下载缓存
 }
 
@@ -35,104 +35,122 @@ export default function ImageDeblur({
   const [currentResult, setCurrentResult] = useState<DeblurResult | null>(null);
   const trpcUtils = api.useUtils();
 
-  const {
-    mutate: submitDeblurMutate,
-    isPending: isSubmitting,
-  } = api.imageDeblur.submitDeblur.useMutation({
-    onSuccess(data) {
-      toast.success("Image submitted for deblurring!");
-
-      // Set initial result state
-      setCurrentResult({
-        requestId: data.requestId,
-        imageId: data.imageId,
-        original_url: '', // Will be set by form
-        status: 'processing'
-      });
-    },
-    onError(error) {
-      const code = error.data?.code;
-      const message = error.message;
-
-      toast.error(code, {
-        description: message,
-      });
-    },
-    onSettled() {
-      void trpcUtils.credit.getUserCredit.invalidate();
-    },
-  });
-
-  const {
-    data: _statusData,
-    isLoading: isCheckingStatus,
-  } = api.imageDeblur.getDeblurStatus.useQuery(
-    {
-      requestId: currentResult?.requestId ?? "",
-      imageId: currentResult?.imageId,
-    },
-    {
-      enabled: !!currentResult?.requestId && currentResult.status === 'processing',
-      refetchInterval: (data) => {
-        // Stop polling if completed or failed
-        const typedData = data as DeblurStatusData | undefined;
-        if (typedData?.status === 'completed' || typedData?.status === 'failed') {
-          return false;
-        }
-        return 3000; // Poll every 3 seconds
-      },
+  const { mutate: submitDeblurMutate, isPending: isSubmitting } =
+    api.imageDeblur.submitDeblur.useMutation({
       onSuccess(data) {
-        const typedData = data as DeblurStatusData;
-        if (typedData.status === 'completed' && typedData.image_url) {
-          // 立即开始下载和缓存图片
-          setCurrentResult(prev => prev ? {
-            ...prev,
-            processed_url: typedData.image_url,
-            status: 'completed',
-            isDownloading: true
-          } : null);
+        toast.success("Image submitted for deblurring!");
 
-          // 异步下载和缓存图片
-          const cacheKey = `deblurred-${currentResult?.requestId}`;
-          downloadAndCacheImage(typedData.image_url, cacheKey)
-            .then((localUrl) => {
-              setCurrentResult(prev => prev ? {
-                ...prev,
-                local_processed_url: localUrl,
-                isDownloading: false
-              } : null);
+        // Set initial result state
+        setCurrentResult({
+          requestId: data.requestId,
+          imageId: data.imageId,
+          original_url: "", // Will be set by form
+          status: "processing",
+        });
+      },
+      onError(error) {
+        const code = error.data?.code;
+        const message = error.message;
 
-              if (typedData.expires_in_minutes) {
-                toast.success(
-                  `Image deblurring completed! Cached locally for offline viewing.`,
-                  {
-                    description: `Original link expires in ${typedData.expires_in_minutes} minutes.`
+        toast.error(code, {
+          description: message,
+        });
+      },
+      onSettled() {
+        void trpcUtils.credit.getUserCredit.invalidate();
+      },
+    });
+
+  const { data: _statusData, isLoading: isCheckingStatus } =
+    api.imageDeblur.getDeblurStatus.useQuery(
+      {
+        requestId: currentResult?.requestId ?? "",
+        imageId: currentResult?.imageId,
+      },
+      {
+        enabled:
+          !!currentResult?.requestId && currentResult.status === "processing",
+        refetchInterval: (data) => {
+          // Stop polling if completed or failed
+          const typedData = data as DeblurStatusData | undefined;
+          if (
+            typedData?.status === "completed" ||
+            typedData?.status === "failed"
+          ) {
+            return false;
+          }
+          return 3000; // Poll every 3 seconds
+        },
+        onSuccess(data) {
+          const typedData = data as DeblurStatusData;
+          if (typedData.status === "completed" && typedData.image_url) {
+            // 立即开始下载和缓存图片
+            setCurrentResult((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    processed_url: typedData.image_url,
+                    status: "completed",
+                    isDownloading: true,
                   }
+                : null,
+            );
+
+            // 异步下载和缓存图片
+            const cacheKey = `deblurred-${currentResult?.requestId}`;
+            downloadAndCacheImage(typedData.image_url, cacheKey)
+              .then((localUrl) => {
+                setCurrentResult((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        local_processed_url: localUrl,
+                        isDownloading: false,
+                      }
+                    : null,
                 );
-              } else {
-                toast.success("Image deblurring completed and cached locally!");
-              }
-            })
-            .catch((error) => {
-              console.error('Failed to cache image:', error);
-              setCurrentResult(prev => prev ? {
-                ...prev,
-                isDownloading: false
-              } : null);
-              toast.success("Image deblurring completed!", {
-                description: "Image caching failed, but result is available."
+
+                if (typedData.expires_in_minutes) {
+                  toast.success(
+                    `Image deblurring completed! Cached locally for offline viewing.`,
+                    {
+                      description: `Original link expires in ${typedData.expires_in_minutes} minutes.`,
+                    },
+                  );
+                } else {
+                  toast.success(
+                    "Image deblurring completed and cached locally!",
+                  );
+                }
+              })
+              .catch((error) => {
+                console.error("Failed to cache image:", error);
+                setCurrentResult((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        isDownloading: false,
+                      }
+                    : null,
+                );
+                toast.success("Image deblurring completed!", {
+                  description: "Image caching failed, but result is available.",
+                });
               });
-            });
-        } else if (typedData.status === 'failed') {
-          setCurrentResult(prev => prev ? {
-            ...prev,
-            status: 'failed'
-          } : null);
-          toast.error("Image deblurring failed. Please try again.");
-        }
-      }
-    }
-  );
+          } else if (typedData.status === "failed") {
+            setCurrentResult((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    status: "failed",
+                  }
+                : null,
+            );
+            toast.error("Image deblurring failed. Please try again.");
+          }
+        },
+      },
+    );
 
   const handleSubmit = async (imageUrl: string) => {
     if (!isSignedIn) {
@@ -142,9 +160,9 @@ export default function ImageDeblur({
 
     // Reset current result and clear any cached URLs
     setCurrentResult({
-      requestId: '',
+      requestId: "",
       original_url: imageUrl,
-      status: 'processing'
+      status: "processing",
     });
 
     submitDeblurMutate({
@@ -158,12 +176,14 @@ export default function ImageDeblur({
     setCurrentResult(null);
   };
 
-  const _isLoading = isSubmitting || isCheckingStatus || currentResult?.isDownloading;
+  const _isLoading =
+    isSubmitting || isCheckingStatus || currentResult?.isDownloading;
   const showComparison = currentResult?.original_url;
-  const isProcessing = currentResult?.status === 'processing';
+  const isProcessing = currentResult?.status === "processing";
 
   // 优先使用本地缓存的图片URL
-  const displayProcessedUrl = currentResult?.local_processed_url || currentResult?.processed_url;
+  const displayProcessedUrl =
+    currentResult?.local_processed_url ?? currentResult?.processed_url;
 
   return (
     <div

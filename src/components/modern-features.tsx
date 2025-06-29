@@ -13,30 +13,37 @@ const features = [
   {
     icon: Brain,
     title: "Advanced AI Algorithm",
-    description: "State-of-the-art machine learning models trained on millions of images to restore perfect clarity",
+    description:
+      "State-of-the-art machine learning models trained on millions of images to restore perfect clarity",
     badge: "AI-Powered",
-    color: "from-purple-500 to-blue-500"
+    color: "from-purple-500 to-blue-500",
   },
   {
     icon: Zap,
     title: "Lightning Fast Processing",
-    description: "Get professional results in under 30 seconds. No waiting, no delays - just instant transformation",
+    description:
+      "Get professional results in under 30 seconds. No waiting, no delays - just instant transformation",
     badge: "Ultra Fast",
-    color: "from-orange-500 to-red-500"
+    color: "from-orange-500 to-red-500",
   },
   {
     icon: Shield,
     title: "Privacy & Security",
-    description: "Your images are processed securely and automatically deleted after 24 hours. Complete privacy guaranteed",
+    description:
+      "Your images are processed securely and automatically deleted after 24 hours. Complete privacy guaranteed",
     badge: "Secure",
-    color: "from-green-500 to-teal-500"
-  }
+    color: "from-green-500 to-teal-500",
+  },
 ];
 
 const stats = [
   { icon: Upload, label: "Drag & Drop Upload", value: "Multiple Formats" },
-  { icon: Download, label: "High Quality Output", value: "Original Resolution" },
-  { icon: Clock, label: "Batch Processing", value: "Up to 10 Images" }
+  {
+    icon: Download,
+    label: "High Quality Output",
+    value: "Original Resolution",
+  },
+  { icon: Clock, label: "Batch Processing", value: "Up to 10 Images" },
 ];
 
 export default function ModernFeatures({
@@ -45,60 +52,64 @@ export default function ModernFeatures({
 }: React.ComponentProps<"section"> & ModernFeaturesProps) {
   return (
     <section
-      className={cn(
-        "py-24 bg-background relative overflow-hidden",
-        className,
-      )}
+      className={cn("bg-background relative overflow-hidden py-24", className)}
       {...props}
     >
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, var(--primary) 2px, transparent 2px)`,
-          backgroundSize: '50px 50px'
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(circle at 25% 25%, var(--primary) 2px, transparent 2px)`,
+            backgroundSize: "50px 50px",
+          }}
+        />
       </div>
 
-      <div className="container mx-auto px-6 relative z-10">
+      <div className="relative z-10 container mx-auto px-6">
         {/* Section header */}
-        <div className="text-center mb-16">
-          <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
+        <div className="mb-16 text-center">
+          <Badge className="bg-primary/10 text-primary border-primary/20 mb-4">
             Core Features
           </Badge>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+          <h2 className="mb-6 text-4xl font-bold md:text-5xl lg:text-6xl">
             Why Choose
-            <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent"> ImageUnblur</span>
+            <span className="from-primary bg-gradient-to-r to-purple-600 bg-clip-text text-transparent">
+              {" "}
+              ImageUnblur
+            </span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Experience the perfect combination of cutting-edge technology, speed, and reliability
+          <p className="text-muted-foreground mx-auto max-w-3xl text-xl">
+            Experience the perfect combination of cutting-edge technology,
+            speed, and reliability
           </p>
         </div>
 
         {/* Main features grid */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
+        <div className="mb-16 grid gap-8 md:grid-cols-3">
           {features.map((feature, index) => (
             <Card
               key={index}
               className="group relative overflow-hidden border-0 transition-all duration-500 hover:scale-105 hover:shadow-2xl"
               style={{ background: "var(--gradient-card)" }}
             >
-              <CardContent className="p-8 h-full">
+              <CardContent className="h-full p-8">
                 <div className="space-y-6">
                   {/* Icon with gradient background */}
                   <div className="relative">
                     <div
-                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} p-4 group-hover:scale-110 transition-transform duration-300`}
+                      className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${feature.color} p-4 transition-transform duration-300 group-hover:scale-110`}
                     >
-                      <feature.icon className="w-8 h-8 text-white" />
+                      <feature.icon className="h-8 w-8 text-white" />
                     </div>
-                    <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground">
+                    <Badge className="bg-primary text-primary-foreground absolute -top-2 -right-2">
                       {feature.badge}
                     </Badge>
                   </div>
 
                   {/* Content */}
                   <div>
-                    <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">
+                    <h3 className="group-hover:text-primary mb-3 text-xl font-bold transition-colors">
                       {feature.title}
                     </h3>
                     <p className="text-muted-foreground leading-relaxed">
@@ -108,25 +119,29 @@ export default function ModernFeatures({
                 </div>
 
                 {/* Hover effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="from-primary/5 absolute inset-0 bg-gradient-to-r to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               </CardContent>
             </Card>
           ))}
         </div>
 
         {/* Secondary features */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid gap-8 md:grid-cols-3">
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="flex items-center gap-4 p-6 rounded-2xl bg-muted/50 hover:bg-muted transition-colors duration-300"
+              className="bg-muted/50 hover:bg-muted flex items-center gap-4 rounded-2xl p-6 transition-colors duration-300"
             >
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <stat.icon className="w-6 h-6 text-primary" />
+              <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-xl">
+                <stat.icon className="text-primary h-6 w-6" />
               </div>
               <div>
-                <div className="font-semibold text-foreground">{stat.label}</div>
-                <div className="text-sm text-muted-foreground">{stat.value}</div>
+                <div className="text-foreground font-semibold">
+                  {stat.label}
+                </div>
+                <div className="text-muted-foreground text-sm">
+                  {stat.value}
+                </div>
               </div>
             </div>
           ))}

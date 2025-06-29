@@ -1,7 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
 import { images, users } from "~/server/db/schema";
 import { calculateRemainingCredits, hasEnoughCredits } from "~/lib/credit";
 import { env } from "~/env";
@@ -30,38 +34,47 @@ interface ApiErrorResponse {
 
 // MagicAPI service functions
 async function submitImageForDeblur(imageUrl: string): Promise<string> {
-  const response = await fetch('https://api.market/magicapi/deblurer/process', {
-    method: 'POST',
+  const response = await fetch("https://api.market/magicapi/deblurer/process", {
+    method: "POST",
     headers: {
-      'x-magicapi-key': env.MAGICAPI_KEY,
-      'Content-Type': 'application/json'
+      "x-magicapi-key": env.MAGICAPI_KEY,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      image_url: imageUrl
-    })
+      image_url: imageUrl,
+    }),
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: 'Unknown error' })) as ApiErrorResponse;
+    const errorData = (await response
+      .json()
+      .catch(() => ({ error: "Unknown error" }))) as ApiErrorResponse;
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: `Failed to submit image for deblurring: ${errorData.error ?? response.statusText}`,
     });
   }
 
-  const data = await response.json() as SubmitDeblurResponse;
+  const data = (await response.json()) as SubmitDeblurResponse;
   return data.request_id;
 }
 
-async function getDeblurResult(requestId: string): Promise<DeblurStatusResponse> {
-  const response = await fetch(`https://api.market/magicapi/deblurer/${requestId}`, {
-    headers: {
-      'x-magicapi-key': env.MAGICAPI_KEY
-    }
-  });
+async function getDeblurResult(
+  requestId: string,
+): Promise<DeblurStatusResponse> {
+  const response = await fetch(
+    `https://api.market/magicapi/deblurer/${requestId}`,
+    {
+      headers: {
+        "x-magicapi-key": env.MAGICAPI_KEY,
+      },
+    },
+  );
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: 'Unknown error' })) as ApiErrorResponse;
+    const errorData = (await response
+      .json()
+      .catch(() => ({ error: "Unknown error" }))) as ApiErrorResponse;
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: `Failed to get deblur result: ${errorData.error ?? response.statusText}`,
@@ -71,25 +84,23 @@ async function getDeblurResult(requestId: string): Promise<DeblurStatusResponse>
   return response.json() as Promise<DeblurStatusResponse>;
 }
 
-
-
 export const imageDeblurRouter = createTRPCRouter({
   // Submit image for deblurring
   submitDeblur: protectedProcedure
     .input(imageDeblurSchema)
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.session?.userId) {
+      const clerkId = ctx.clerkId;
+
+      if (!clerkId) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "User session not found",
         });
       }
 
-      const userId = ctx.session.userId;
-
       // Check if user has enough credits
       const user = await ctx.db.query.users.findFirst({
-        where: eq(users.id, userId),
+        where: eq(users.clerkId, clerkId),
       });
 
       if (!user) {
@@ -102,10 +113,13 @@ export const imageDeblurRouter = createTRPCRouter({
       // Define credit cost for deblurring (you can adjust this)
       const creditCost = 1;
 
-      if (!hasEnoughCredits(user.creditBalance, creditCost)) {
+      if (
+        !hasEnoughCredits(user.credit ?? 0, user.bonusCredit ?? 0, creditCost)
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Insufficient credits. Please purchase more credits to continue.",
+          message:
+            "Insufficient credits. Please purchase more credits to continue.",
         });
       }
 
@@ -114,20 +128,30 @@ export const imageDeblurRouter = createTRPCRouter({
         const requestId = await submitImageForDeblur(input.image_url);
 
         // Deduct credits from user
-        const newCreditBalance = calculateRemainingCredits(user.creditBalance, creditCost);
+        const newCreditBalance = calculateRemainingCredits(
+          user.credit ?? 0,
+          user.bonusCredit ?? 0,
+          creditCost,
+        );
         await ctx.db
           .update(users)
-          .set({ creditBalance: newCreditBalance })
-          .where(eq(users.id, userId));
+          .set({
+            credit: newCreditBalance.credit,
+            bonusCredit: newCreditBalance.bonusCredit,
+          })
+          .where(eq(users.clerkId, clerkId));
 
         // Save the request to database (optional, for tracking)
-        const savedImage = await ctx.db.insert(images).values({
-          userId: userId,
-          prompt: `Image deblurring request`, // or store original image URL
-          imageUrl: "", // Will be updated when processing is complete
-          requestId: requestId,
-          status: "processing",
-        }).returning();
+        const savedImage = await ctx.db
+          .insert(images)
+          .values({
+            clerkId: clerkId,
+            prompt: `Image deblurring request`, // or store original image URL
+            imageUrl: "", // Will be updated when processing is complete
+            requestId: requestId,
+            status: "processing",
+          })
+          .returning();
 
         return {
           success: true,
@@ -138,17 +162,20 @@ export const imageDeblurRouter = createTRPCRouter({
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to process image",
+          message:
+            error instanceof Error ? error.message : "Failed to process image",
         });
       }
     }),
 
   // Check deblur status and get result - 公共 API，无需登录
   getDeblurStatus: publicProcedure
-    .input(z.object({
-      requestId: z.string(),
-      imageId: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        requestId: z.string(),
+        imageId: z.string().optional(),
+      }),
+    )
     .query(async ({ ctx, input }) => {
       try {
         const result = await getDeblurResult(input.requestId);
@@ -189,29 +216,34 @@ export const imageDeblurRouter = createTRPCRouter({
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get deblur status",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to get deblur status",
         });
       }
     }),
 
   // Get user's deblur history
   getDeblurHistory: protectedProcedure
-    .input(z.object({
-      limit: z.number().min(1).max(50).default(10),
-      offset: z.number().min(0).default(0),
-    }))
+    .input(
+      z.object({
+        limit: z.number().min(1).max(50).default(10),
+        offset: z.number().min(0).default(0),
+      }),
+    )
     .query(async ({ ctx, input }) => {
-      if (!ctx.session?.userId) {
+      if (!ctx.clerkId) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "User session not found",
         });
       }
 
-      const userId = ctx.session.userId;
+      const clerkId = ctx.clerkId;
 
       const userImages = await ctx.db.query.images.findMany({
-        where: eq(images.userId, userId),
+        where: eq(images.clerkId, clerkId),
         limit: input.limit,
         offset: input.offset,
         orderBy: (images, { desc }) => [desc(images.createdAt)],

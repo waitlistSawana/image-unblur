@@ -1,9 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 // 仅保护 examples 路由，其他页面允许未登录访问
-const isProtectedRoute = createRouteMatcher([
-  "/examples"
-]);
+const isProtectedRoute = createRouteMatcher(["/examples"]);
 
 export default clerkMiddleware(async (auth, req) => {
   // 如果是受保护的路由，要求认证

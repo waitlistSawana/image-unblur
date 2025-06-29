@@ -1,7 +1,14 @@
 "use client";
 
 import { cn } from "~/lib/utils";
-import { Download, Loader2, CheckCircle, XCircle, Clock, Save } from "lucide-react";
+import {
+  Download,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Save,
+} from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -19,7 +26,7 @@ interface ImageComparisonPreviewProps {
   isLoading: boolean;
   originalImageUrl?: string;
   processedImageUrl?: string;
-  status?: 'processing' | 'completed' | 'failed';
+  status?: "processing" | "completed" | "failed";
   showComparison?: boolean;
   isDownloading?: boolean;
 }
@@ -38,7 +45,7 @@ export default function ImageComparisonPreview({
 
   // Simulate progress when processing
   useEffect(() => {
-    if (status === 'processing') {
+    if (status === "processing") {
       const interval = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 90) return prev; // Stop at 90% until actually complete
@@ -47,9 +54,9 @@ export default function ImageComparisonPreview({
       }, 1500);
 
       return () => clearInterval(interval);
-    } else if (status === 'completed') {
+    } else if (status === "completed") {
       setProgress(100);
-    } else if (status === 'failed') {
+    } else if (status === "failed") {
       setProgress(0);
     }
   }, [status]);
@@ -58,12 +65,12 @@ export default function ImageComparisonPreview({
     try {
       saveImageToLocal(imageUrl, filename);
     } catch (error) {
-      console.error('Failed to download image:', error);
+      console.error("Failed to download image:", error);
       // Fallback to traditional download
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = imageUrl;
       link.download = filename;
-      link.target = '_blank';
+      link.target = "_blank";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -72,11 +79,11 @@ export default function ImageComparisonPreview({
 
   const getStatusIcon = () => {
     switch (status) {
-      case 'processing':
+      case "processing":
         return <Clock className="h-5 w-5 text-blue-500" />;
-      case 'completed':
+      case "completed":
         return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'failed':
+      case "failed":
         return <XCircle className="h-5 w-5 text-red-500" />;
       default:
         return null;
@@ -85,18 +92,18 @@ export default function ImageComparisonPreview({
 
   const getStatusText = () => {
     if (isDownloading) {
-      return 'Caching image locally...';
+      return "Caching image locally...";
     }
 
     switch (status) {
-      case 'processing':
-        return 'Processing your image...';
-      case 'completed':
-        return 'Image processing completed!';
-      case 'failed':
-        return 'Image processing failed';
+      case "processing":
+        return "Processing your image...";
+      case "completed":
+        return "Image processing completed!";
+      case "failed":
+        return "Image processing failed";
       default:
-        return 'Upload an image to get started';
+        return "Upload an image to get started";
     }
   };
 
@@ -108,20 +115,23 @@ export default function ImageComparisonPreview({
             {getStatusIcon()}
             Preview
           </CardTitle>
-          <CardDescription>
-            {getStatusText()}
-          </CardDescription>
+          <CardDescription>{getStatusText()}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           {/* Progress Bar */}
-          {(status === 'processing' || isDownloading) && (
+          {(status === "processing" || isDownloading) && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>{isDownloading ? 'Caching' : 'Processing'}</span>
-                <span>{isDownloading ? '95%' : `${Math.round(progress)}%`}</span>
+                <span>{isDownloading ? "Caching" : "Processing"}</span>
+                <span>
+                  {isDownloading ? "95%" : `${Math.round(progress)}%`}
+                </span>
               </div>
-              <Progress value={isDownloading ? 95 : progress} className="w-full" />
+              <Progress
+                value={isDownloading ? 95 : progress}
+                className="w-full"
+              />
             </div>
           )}
 
@@ -137,7 +147,7 @@ export default function ImageComparisonPreview({
                   <img
                     src={originalImageUrl}
                     alt="Original blurry image"
-                    className="w-full max-h-64 object-contain rounded-lg border bg-muted"
+                    className="bg-muted max-h-64 w-full rounded-lg border object-contain"
                   />
                 </div>
               </div>
@@ -150,17 +160,19 @@ export default function ImageComparisonPreview({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDownload(processedImageUrl, 'deblurred-image.jpg')}
+                      onClick={() =>
+                        handleDownload(processedImageUrl, "deblurred-image.jpg")
+                      }
                       disabled={isDownloading}
                     >
                       {isDownloading ? (
                         <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Caching...
                         </>
                       ) : (
                         <>
-                          <Download className="h-4 w-4 mr-2" />
+                          <Download className="mr-2 h-4 w-4" />
                           Download
                         </>
                       )}
@@ -170,28 +182,32 @@ export default function ImageComparisonPreview({
                     <img
                       src={processedImageUrl}
                       alt="Processed clear image"
-                      className="w-full max-h-64 object-contain rounded-lg border bg-muted"
+                      className="bg-muted max-h-64 w-full rounded-lg border object-contain"
                     />
                   </div>
                 </div>
-              ) : status === 'processing' ? (
+              ) : status === "processing" ? (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Enhanced (Processing...)</h4>
-                  <div className="flex items-center justify-center h-64 rounded-lg border bg-muted">
-                    <div className="text-center space-y-2">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
+                  <h4 className="text-sm font-medium">
+                    Enhanced (Processing...)
+                  </h4>
+                  <div className="bg-muted flex h-64 items-center justify-center rounded-lg border">
+                    <div className="space-y-2 text-center">
+                      <Loader2 className="text-muted-foreground mx-auto h-8 w-8 animate-spin" />
+                      <p className="text-muted-foreground text-sm">
                         AI is enhancing your image
                       </p>
                     </div>
                   </div>
                 </div>
-              ) : status === 'failed' ? (
+              ) : status === "failed" ? (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-red-500">Processing Failed</h4>
-                  <div className="flex items-center justify-center h-64 rounded-lg border border-red-200 bg-red-50">
-                    <div className="text-center space-y-2">
-                      <XCircle className="h-8 w-8 mx-auto text-red-500" />
+                  <h4 className="text-sm font-medium text-red-500">
+                    Processing Failed
+                  </h4>
+                  <div className="flex h-64 items-center justify-center rounded-lg border border-red-200 bg-red-50">
+                    <div className="space-y-2 text-center">
+                      <XCircle className="mx-auto h-8 w-8 text-red-500" />
                       <p className="text-sm text-red-600">
                         Failed to process the image. Please try again.
                       </p>
@@ -202,11 +218,11 @@ export default function ImageComparisonPreview({
             </div>
           ) : (
             // Placeholder
-            <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed border-muted-foreground/25">
-              <div className="text-center space-y-2">
+            <div className="border-muted-foreground/25 flex h-96 items-center justify-center rounded-lg border-2 border-dashed">
+              <div className="space-y-2 text-center">
                 <div className="text-muted-foreground">
                   <svg
-                    className="h-12 w-12 mx-auto"
+                    className="mx-auto h-12 w-12"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -219,7 +235,7 @@ export default function ImageComparisonPreview({
                     />
                   </svg>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Your enhanced image will appear here
                 </p>
               </div>
@@ -227,14 +243,17 @@ export default function ImageComparisonPreview({
           )}
 
           {/* Processing Info */}
-          {status === 'processing' && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          {status === "processing" && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
               <div className="flex items-start gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-blue-500 mt-0.5" />
+                <Loader2 className="mt-0.5 h-4 w-4 animate-spin text-blue-500" />
                 <div className="text-sm">
-                  <p className="font-medium text-blue-900">Processing in progress</p>
+                  <p className="font-medium text-blue-900">
+                    Processing in progress
+                  </p>
                   <p className="text-blue-700">
-                    Our AI is analyzing and enhancing your image. This usually takes 30-60 seconds.
+                    Our AI is analyzing and enhancing your image. This usually
+                    takes 30-60 seconds.
                   </p>
                 </div>
               </div>
@@ -242,17 +261,18 @@ export default function ImageComparisonPreview({
           )}
 
           {/* Success Info */}
-          {status === 'completed' && processedImageUrl && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          {status === "completed" && processedImageUrl && (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-3">
               <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                <CheckCircle className="mt-0.5 h-4 w-4 text-green-500" />
                 <div className="text-sm">
-                  <p className="font-medium text-green-900">Enhancement completed!</p>
+                  <p className="font-medium text-green-900">
+                    Enhancement completed!
+                  </p>
                   <p className="text-green-700">
                     {isDownloading
-                      ? 'Caching image locally for offline viewing...'
-                      : 'Your image has been successfully deblurred and cached locally. Click download to save to your device.'
-                    }
+                      ? "Caching image locally for offline viewing..."
+                      : "Your image has been successfully deblurred and cached locally. Click download to save to your device."}
                   </p>
                 </div>
               </div>
@@ -261,13 +281,16 @@ export default function ImageComparisonPreview({
 
           {/* Cache Info */}
           {isDownloading && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
               <div className="flex items-start gap-2">
-                <Save className="h-4 w-4 text-blue-500 mt-0.5" />
+                <Save className="mt-0.5 h-4 w-4 text-blue-500" />
                 <div className="text-sm">
-                  <p className="font-medium text-blue-900">Caching for offline access</p>
+                  <p className="font-medium text-blue-900">
+                    Caching for offline access
+                  </p>
                   <p className="text-blue-700">
-                    Saving image locally to ensure it remains available even after the original link expires.
+                    Saving image locally to ensure it remains available even
+                    after the original link expires.
                   </p>
                 </div>
               </div>

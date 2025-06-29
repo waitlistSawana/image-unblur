@@ -22,7 +22,9 @@ export interface DeblurErrorResponse {
 /**
  * Submit an image for deblurring processing
  */
-export async function submitImageDeblur(imageUrl: string): Promise<DeblurSubmitResponse> {
+export async function submitImageDeblur(
+  imageUrl: string,
+): Promise<DeblurSubmitResponse> {
   const response = await fetch(`${MAGICAPI_BASE_URL}/process`, {
     method: "POST",
     headers: {
@@ -45,7 +47,9 @@ export async function submitImageDeblur(imageUrl: string): Promise<DeblurSubmitR
 /**
  * Get the result of a deblurring request
  */
-export async function getDeblurResult(requestId: string): Promise<DeblurResultResponse> {
+export async function getDeblurResult(
+  requestId: string,
+): Promise<DeblurResultResponse> {
   const response = await fetch(`${MAGICAPI_BASE_URL}/${requestId}`, {
     method: "GET",
     headers: {
@@ -66,8 +70,8 @@ export async function getDeblurResult(requestId: string): Promise<DeblurResultRe
  */
 export async function pollDeblurResult(
   requestId: string,
-  maxAttempts: number = 30,
-  interval: number = 2000,
+  maxAttempts = 30,
+  interval = 2000,
 ): Promise<string> {
   for (let i = 0; i < maxAttempts; i++) {
     const result = await getDeblurResult(requestId);
@@ -82,7 +86,7 @@ export async function pollDeblurResult(
 
     // If still processing, wait before next attempt
     if (i < maxAttempts - 1) {
-      await new Promise(resolve => setTimeout(resolve, interval));
+      await new Promise((resolve) => setTimeout(resolve, interval));
     }
   }
 

@@ -67,22 +67,25 @@ export default function ImageUploadForm({
     }
   };
 
-  const handleFileUpload = useCallback((file: File) => {
-    if (!file.type.startsWith('image/')) {
-      form.setError('image_url', {
-        type: 'manual',
-        message: 'Please select a valid image file'
-      });
-      return;
-    }
+  const handleFileUpload = useCallback(
+    (file: File) => {
+      if (!file.type.startsWith("image/")) {
+        form.setError("image_url", {
+          type: "manual",
+          message: "Please select a valid image file",
+        });
+        return;
+      }
 
-    // Create preview URL
-    const url = URL.createObjectURL(file);
-    setUploadedFile(file);
-    setPreviewUrl(url);
-    form.setValue('image_url', url);
-    form.clearErrors('image_url');
-  }, [form]);
+      // Create preview URL
+      const url = URL.createObjectURL(file);
+      setUploadedFile(file);
+      setPreviewUrl(url);
+      form.setValue("image_url", url);
+      form.clearErrors("image_url");
+    },
+    [form],
+  );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -94,17 +97,20 @@ export default function ImageUploadForm({
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
 
-    if (disabled) return;
+      if (disabled) return;
 
-    if (e.dataTransfer.files?.[0]) {
-      handleFileUpload(e.dataTransfer.files[0]);
-    }
-  }, [disabled, handleFileUpload]);
+      if (e.dataTransfer.files?.[0]) {
+        handleFileUpload(e.dataTransfer.files[0]);
+      }
+    },
+    [disabled, handleFileUpload],
+  );
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -158,9 +164,11 @@ export default function ImageUploadForm({
               <div className="space-y-4">
                 <div
                   className={cn(
-                    "relative border-2 border-dashed rounded-lg p-6 text-center transition-colors",
-                    dragActive ? "border-primary bg-primary/10" : "border-muted-foreground/25",
-                    disabled && "opacity-50 cursor-not-allowed"
+                    "relative rounded-lg border-2 border-dashed p-6 text-center transition-colors",
+                    dragActive
+                      ? "border-primary bg-primary/10"
+                      : "border-muted-foreground/25",
+                    disabled && "cursor-not-allowed opacity-50",
                   )}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
@@ -169,18 +177,19 @@ export default function ImageUploadForm({
                 >
                   <input
                     type="file"
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
                     onChange={handleFileSelect}
                     accept="image/*"
                     disabled={disabled}
                   />
 
                   <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    <Upload className="text-muted-foreground h-8 w-8" />
                     <div className="text-sm">
-                      <span className="font-medium">Click to upload</span> or drag and drop
+                      <span className="font-medium">Click to upload</span> or
+                      drag and drop
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       PNG, JPG, GIF up to 10MB
                     </div>
                   </div>
@@ -192,7 +201,7 @@ export default function ImageUploadForm({
                     <img
                       src={previewUrl}
                       alt="Preview"
-                      className="w-full max-h-64 object-contain rounded-lg border"
+                      className="max-h-64 w-full rounded-lg border object-contain"
                     />
                     <Button
                       type="button"
@@ -212,7 +221,7 @@ export default function ImageUploadForm({
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
+                    <span className="bg-background text-muted-foreground px-2">
                       Or use image URL
                     </span>
                   </div>
@@ -251,7 +260,7 @@ export default function ImageUploadForm({
                   className="text-xs"
                   onClick={() => {
                     const exampleUrl = "https://example.com/blurry-photo.jpg";
-                    form.setValue('image_url', exampleUrl);
+                    form.setValue("image_url", exampleUrl);
                     handleUrlChange(exampleUrl);
                   }}
                   disabled={isLoading ?? disabled}
@@ -265,7 +274,7 @@ export default function ImageUploadForm({
                   onClick={handleReset}
                   disabled={isLoading ?? disabled}
                 >
-                  <RotateCcw className="h-3 w-3 mr-1" />
+                  <RotateCcw className="mr-1 h-3 w-3" />
                   Reset
                 </Button>
               </div>
@@ -275,11 +284,11 @@ export default function ImageUploadForm({
               <Button
                 type="submit"
                 className="w-full cursor-pointer transition-all"
-                disabled={isLoading ?? disabled ?? !form.watch('image_url')}
+                disabled={isLoading ?? disabled ?? !form.watch("image_url")}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="animate-spin mr-2" />
+                    <Loader2 className="mr-2 animate-spin" />
                     Processing...
                   </>
                 ) : (

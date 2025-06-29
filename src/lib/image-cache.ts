@@ -18,7 +18,7 @@ const imageCache = new Map<string, CachedImage>();
  */
 export async function downloadAndCacheImage(
   imageUrl: string,
-  cacheKey: string
+  cacheKey: string,
 ): Promise<string> {
   try {
     // 检查是否已经缓存且未过期
@@ -29,8 +29,8 @@ export async function downloadAndCacheImage(
 
     // 下载图片
     const response = await fetch(imageUrl, {
-      mode: 'cors',
-      credentials: 'omit'
+      mode: "cors",
+      credentials: "omit",
     });
 
     if (!response.ok) {
@@ -57,7 +57,7 @@ export async function downloadAndCacheImage(
 
     return blobUrl;
   } catch (error) {
-    console.error('Failed to download and cache image:', error);
+    console.error("Failed to download and cache image:", error);
     // 如果下载失败，返回原始 URL
     return imageUrl;
   }
@@ -107,18 +107,18 @@ export function clearAllCache(): void {
  */
 export function saveImageToLocal(blobUrl: string, filename: string): void {
   try {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = blobUrl;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   } catch (error) {
-    console.error('Failed to save image locally:', error);
+    console.error("Failed to save image locally:", error);
   }
 }
 
 // 定期清理过期缓存
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   setInterval(cleanupExpiredCache, 60 * 60 * 1000); // 每小时清理一次
 }

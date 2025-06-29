@@ -16,9 +16,9 @@ export default async function Home() {
 
       <ModernHero />
 
-      <ModernFeatures />
-
       <ModernDemo />
+
+      <ModernFeatures />
 
       <ModernHowItWorks />
 
