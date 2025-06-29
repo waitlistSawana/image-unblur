@@ -42,7 +42,7 @@ export default function ImageDeblur({
         toast.error(error.data?.code ?? "Error", {
           description: error.message,
         });
-      }
+      },
     });
 
   const { data: statusData, isLoading: isCheckingStatus } =
@@ -71,17 +71,21 @@ export default function ImageDeblur({
     if (statusData.status === "completed" && statusData.image_url) {
       handleCompletedStatus({
         image_url: statusData.image_url,
-        expires_in_minutes: statusData.expires_in_minutes
+        expires_in_minutes: statusData.expires_in_minutes,
       });
     } else if (statusData.status === "failed") {
       setCurrentResult((prev) =>
-        prev ? { 
-          ...prev, 
-          status: "failed",
-          error: statusData.error ?? "Unknown error"
-        } : null
+        prev
+          ? {
+              ...prev,
+              status: "failed",
+              error: statusData.error ?? "Unknown error",
+            }
+          : null,
       );
-      toast.error(`Image deblurring failed: ${statusData.error ?? "Unknown error"}. Please try again.`);
+      toast.error(
+        `Image deblurring failed: ${statusData.error ?? "Unknown error"}. Please try again.`,
+      );
     }
   }, [statusData, currentResult?.requestId]);
 
@@ -102,7 +106,7 @@ export default function ImageDeblur({
             status: "completed",
             isDownloading: true,
           }
-        : null
+        : null,
     );
 
     // Cache the image
@@ -117,7 +121,7 @@ export default function ImageDeblur({
                 local_processed_url: localUrl,
                 isDownloading: false,
               }
-            : null
+            : null,
         );
 
         const message = "Image deblurring completed and cached locally!";
@@ -130,7 +134,7 @@ export default function ImageDeblur({
       .catch((error) => {
         console.error("Failed to cache image:", error);
         setCurrentResult((prev) =>
-          prev ? { ...prev, isDownloading: false } : null
+          prev ? { ...prev, isDownloading: false } : null,
         );
         toast.success("Image deblurring completed!", {
           description: "Image caching failed, but result is available.",
@@ -139,10 +143,11 @@ export default function ImageDeblur({
   };
 
   const handleSubmit = async (imageUrl: string) => {
-    if (!loaded || !isSignedIn) {
-      openSignIn();
-      return false;
-    }
+    // 暂时关闭检查登录，留着
+    // if (!loaded || !isSignedIn) {
+    //   openSignIn();
+    //   return false;
+    // }
 
     console.log("Submitting image for deblurring:", imageUrl);
     setCurrentResult({
@@ -161,16 +166,18 @@ export default function ImageDeblur({
   };
 
   // Derived state
-  const isLoading = isSubmitting || isCheckingStatus || Boolean(currentResult?.isDownloading);
+  const isLoading =
+    isSubmitting || isCheckingStatus || Boolean(currentResult?.isDownloading);
   const showComparison = Boolean(currentResult?.original_url);
   const isProcessing = currentResult?.status === "processing";
-  const displayProcessedUrl = currentResult?.local_processed_url ?? currentResult?.processed_url;
+  const displayProcessedUrl =
+    currentResult?.local_processed_url ?? currentResult?.processed_url;
 
   return (
     <div
       className={cn(
         "mx-auto flex max-w-6xl flex-col gap-4 p-4 md:flex-row",
-        className
+        className,
       )}
       {...props}
     >

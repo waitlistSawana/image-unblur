@@ -53,7 +53,7 @@ export default function ImageUploadForm({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
-  
+
   // 使用上传文件的mutation
   const uploadFileMutation = api.cloudflare.uploadFile.useMutation();
 
@@ -72,13 +72,13 @@ export default function ImageUploadForm({
       }
     }
   };
-  
+
   // 上传文件到R2并获取公共URL
   const uploadFileToR2 = async (file: File): Promise<string> => {
     setIsUploading(true);
     setUploadProgress(10);
     setErrorDetails(null);
-    
+
     try {
       // 检查文件大小
       if (file.size > 10 * 1024 * 1024) {
@@ -91,30 +91,30 @@ export default function ImageUploadForm({
       const uniqueId = Math.random().toString(36).substring(2, 10);
       const extension = file.name.split(".").pop() ?? "jpg";
       const filename = `uploads/${timestamp}-${uniqueId}.${extension}`;
-      
+
       setUploadProgress(20);
-      toast.info("Preparing file for upload...");
-      
+      // toast.info("Preparing file for upload...");
+
       // 将文件转换为base64
       const fileContent = await readFileAsBase64(file);
       if (!fileContent) {
         throw new Error("Failed to read file content");
       }
-      
+
       setUploadProgress(40);
-      toast.info("Uploading file to server...");
+      // toast.info("Uploading file to server...");
       console.log("Uploading file to server:", filename);
-      
+
       try {
         // 通过服务器上传文件
         const publicUrl = await uploadFileMutation.mutateAsync({
           filename,
           fileContent,
-          contentType: file.type
+          contentType: file.type,
         });
-        
+
         console.log("Upload successful, public URL:", publicUrl);
-        
+
         setUploadProgress(100);
         toast.success("File successfully uploaded!");
         return publicUrl;
@@ -158,14 +158,14 @@ export default function ImageUploadForm({
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        if (typeof reader.result === 'string') {
+        if (typeof reader.result === "string") {
           resolve(reader.result);
         } else {
-          reject(new Error('Failed to read file as base64'));
+          reject(new Error("Failed to read file as base64"));
         }
       };
       reader.onerror = () => {
-        reject(new Error(reader.error?.message ?? 'Error reading file'));
+        reject(new Error(reader.error?.message ?? "Error reading file"));
       };
       reader.readAsDataURL(file);
     });
@@ -186,12 +186,12 @@ export default function ImageUploadForm({
       const url = URL.createObjectURL(file);
       setUploadedFile(file);
       setPreviewUrl(url);
-      
+
       try {
-        toast.info(`Uploading ${file.name}...`);
+        // toast.info(`Uploading ${file.name}...`);
         // 立即上传文件到R2并获取URL
         const publicUrl = await uploadFileToR2(file);
-        
+
         // 将R2 URL设置到表单中
         form.setValue("image_url", publicUrl);
         form.clearErrors("image_url");
@@ -329,7 +329,7 @@ export default function ImageUploadForm({
                 {/* Error Details */}
                 {errorDetails && (
                   <div className="w-full">
-                    <div className="text-destructive text-xs border border-destructive rounded-md p-2">
+                    <div className="text-destructive border-destructive rounded-md border p-2 text-xs">
                       <strong>Error Details:</strong> {errorDetails}
                     </div>
                   </div>
@@ -399,7 +399,8 @@ export default function ImageUploadForm({
                   size="sm"
                   className="text-xs"
                   onClick={() => {
-                    const exampleUrl = "https://replicate.delivery/mgxm/e7a66188-34c6-483b-813f-be5c96a3952b/blurry-reds-0.jpg";
+                    const exampleUrl =
+                      "https://replicate.delivery/mgxm/e7a66188-34c6-483b-813f-be5c96a3952b/blurry-reds-0.jpg";
                     form.setValue("image_url", exampleUrl);
                     handleUrlChange(exampleUrl);
                   }}

@@ -18,7 +18,9 @@ interface SubmitDeblurResponse {
 
 interface DeblurStatusResponse {
   status: string;
-  image_url?: string; // 根据API文档，成功后返回的是image_url字段
+  image_url?: string; // 可能的字段名
+  result?: string; // 可能的字段名
+  output?: string; // 实际API返回的字段名
   error?: string;
 }
 
@@ -65,18 +67,22 @@ const handleApiError = async (
 async function submitImageForDeblur(imageUrl: string): Promise<string> {
   try {
     console.log("Submitting image to MagicAPI:", imageUrl);
-    
+
     const response = await fetch(`${API_BASE_URL}/deblurer`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
         image: imageUrl, // 根据API文档，参数名是image而不是image_url
-        task_type: "Image Debluring (REDS)" // 添加task_type参数
+        task_type: "Image Debluring (REDS)", // 添加task_type参数
       }),
     });
 
     if (!response.ok) {
-      console.error("MagicAPI error response:", response.status, response.statusText);
+      console.error(
+        "MagicAPI error response:",
+        response.status,
+        response.statusText,
+      );
       await handleApiError(response, "submit image for deblurring");
     }
 
@@ -86,7 +92,7 @@ async function submitImageForDeblur(imageUrl: string): Promise<string> {
   } catch (error) {
     console.error("Error submitting to MagicAPI:", error);
     if (error instanceof TRPCError) throw error;
-    
+
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: `Failed to submit image for deblurring: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -99,29 +105,46 @@ async function getDeblurResult(
 ): Promise<{ status: string; image_url?: string; error?: string }> {
   try {
     console.log("Checking status for request:", requestId);
-    
+
     const response = await fetch(`${API_BASE_URL}/predictions/${requestId}`, {
       headers: getHeaders(),
     });
 
     if (!response.ok) {
-      console.error("MagicAPI status error:", response.status, response.statusText);
+      console.error(
+        "MagicAPI status error:",
+        response.status,
+        response.statusText,
+      );
       await handleApiError(response, "get deblur result");
     }
 
     const data = (await response.json()) as DeblurStatusResponse;
     console.log("MagicAPI status response:", data);
 
+    // Add detailed debugging for the response structure
+    console.log("MagicAPI response structure:", {
+      status: data.status,
+      image_url: data.image_url,
+      result: data.result,
+      output: data.output,
+      error: data.error,
+      fullResponse: JSON.stringify(data),
+    });
+
+    // Check which field contains the image URL
+    const imageUrl = data.image_url ?? data.result ?? data.output;
+
     // 根据API文档直接返回响应数据
     return {
       status: data.status,
-      image_url: data.image_url,
+      image_url: imageUrl, // Use any of the possible fields that contains the URL
       error: data.error,
     };
   } catch (error) {
     console.error("Error getting status from MagicAPI:", error);
     if (error instanceof TRPCError) throw error;
-    
+
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: `Failed to get deblur result: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -146,10 +169,11 @@ export const imageDeblurRouter = createTRPCRouter({
       } catch (error) {
         // 捕获所有错误并转换为TRPC错误
         if (error instanceof TRPCError) throw error;
-        
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to process image",
+          message:
+            error instanceof Error ? error.message : "Failed to process image",
         });
       }
     }),
@@ -162,15 +186,17 @@ export const imageDeblurRouter = createTRPCRouter({
         // Get result from MagicAPI
         const result = await getDeblurResult(input.requestId);
 
+        console.log("Processing result before mapping:", result);
+
         // 将API的状态映射到我们的内部状态
-        const mappedStatus = 
+        const mappedStatus =
           result.status === "succeeded"
             ? "completed"
             : result.status === "failed"
               ? "failed"
               : "processing";
 
-        return {
+        const responseObj = {
           ...result,
           status: mappedStatus, // 使用映射后的状态
           // Add expiration warning for frontend
@@ -180,13 +206,19 @@ export const imageDeblurRouter = createTRPCRouter({
               ? "Processed image URL expires in 10 minutes. Download or cache locally."
               : undefined,
         };
+
+        console.log("Final response object:", responseObj);
+        return responseObj;
       } catch (error) {
         // 捕获所有错误并转换为TRPC错误
         if (error instanceof TRPCError) throw error;
-        
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Failed to get deblur status",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to get deblur status",
         });
       }
     }),
