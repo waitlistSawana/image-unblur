@@ -16,6 +16,7 @@ interface DeblurResult {
   local_processed_url?: string;
   status: "processing" | "completed" | "failed";
   isDownloading?: boolean;
+  error?: string;
 }
 
 export default function ImageDeblur({
@@ -29,6 +30,7 @@ export default function ImageDeblur({
     api.imageDeblur.submitDeblur.useMutation({
       onSuccess(data) {
         toast.success("Image submitted for deblurring!");
+        console.log("Submit success response:", data);
         setCurrentResult({
           requestId: data.requestId,
           original_url: data.originalUrl,
@@ -36,6 +38,7 @@ export default function ImageDeblur({
         });
       },
       onError(error) {
+        console.error("Submit error:", error);
         toast.error(error.data?.code ?? "Error", {
           description: error.message,
         });
@@ -58,6 +61,8 @@ export default function ImageDeblur({
   useEffect(() => {
     if (!statusData || !currentResult?.requestId) return;
 
+    console.log("Status update received:", statusData);
+
     // Stop refetching if completed or failed
     if (statusData.status === "completed" || statusData.status === "failed") {
       // 停止轮询，不使用cancel
@@ -70,9 +75,13 @@ export default function ImageDeblur({
       });
     } else if (statusData.status === "failed") {
       setCurrentResult((prev) =>
-        prev ? { ...prev, status: "failed" } : null
+        prev ? { 
+          ...prev, 
+          status: "failed",
+          error: statusData.error ?? "Unknown error"
+        } : null
       );
-      toast.error("Image deblurring failed. Please try again.");
+      toast.error(`Image deblurring failed: ${statusData.error ?? "Unknown error"}. Please try again.`);
     }
   }, [statusData, currentResult?.requestId]);
 
@@ -81,6 +90,8 @@ export default function ImageDeblur({
     expires_in_minutes?: number;
   }) => {
     if (!currentResult) return;
+
+    console.log("Processing completed with image URL:", statusData.image_url);
 
     // Update state to show we're downloading
     setCurrentResult((prev) =>
@@ -98,6 +109,7 @@ export default function ImageDeblur({
     const cacheKey = `deblurred-${currentResult.requestId}`;
     void downloadAndCacheImage(statusData.image_url, cacheKey)
       .then((localUrl) => {
+        console.log("Image cached locally at:", localUrl);
         setCurrentResult((prev) =>
           prev
             ? {
@@ -127,11 +139,12 @@ export default function ImageDeblur({
   };
 
   const handleSubmit = async (imageUrl: string) => {
-    if (!loaded && !isSignedIn) {
+    if (!loaded || !isSignedIn) {
       openSignIn();
       return false;
     }
 
+    console.log("Submitting image for deblurring:", imageUrl);
     setCurrentResult({
       requestId: "",
       original_url: imageUrl,
@@ -142,7 +155,10 @@ export default function ImageDeblur({
     return true;
   };
 
-  const handleReset = () => setCurrentResult(null);
+  const handleReset = () => {
+    console.log("Resetting deblur process");
+    setCurrentResult(null);
+  };
 
   // Derived state
   const isLoading = isSubmitting || isCheckingStatus || Boolean(currentResult?.isDownloading);

@@ -18,7 +18,7 @@ interface SubmitDeblurResponse {
 
 interface DeblurStatusResponse {
   status: string;
-  result?: string; // 根据API文档，成功后返回的是result字段
+  image_url?: string; // 根据API文档，成功后返回的是image_url字段
   error?: string;
 }
 
@@ -27,7 +27,7 @@ interface ApiErrorResponse {
 }
 
 // API基础URL和请求头
-const API_BASE_URL = "https://api.magicapi.dev/api/v1/magicapi/deblurer";
+const API_BASE_URL = "https://prod.api.market/api/v1/magicapi/deblurer";
 const getHeaders = () => ({
   accept: "application/json",
   "x-magicapi-key": env.MAGICAPI_KEY,
@@ -64,21 +64,27 @@ const handleApiError = async (
 // MagicAPI service functions
 async function submitImageForDeblur(imageUrl: string): Promise<string> {
   try {
+    console.log("Submitting image to MagicAPI:", imageUrl);
+    
     const response = await fetch(`${API_BASE_URL}/deblurer`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
         image: imageUrl, // 根据API文档，参数名是image而不是image_url
+        task_type: "Image Debluring (REDS)" // 添加task_type参数
       }),
     });
 
     if (!response.ok) {
+      console.error("MagicAPI error response:", response.status, response.statusText);
       await handleApiError(response, "submit image for deblurring");
     }
 
     const data = (await response.json()) as SubmitDeblurResponse;
+    console.log("MagicAPI submit response:", data);
     return data.request_id;
   } catch (error) {
+    console.error("Error submitting to MagicAPI:", error);
     if (error instanceof TRPCError) throw error;
     
     throw new TRPCError({
@@ -92,23 +98,28 @@ async function getDeblurResult(
   requestId: string,
 ): Promise<{ status: string; image_url?: string; error?: string }> {
   try {
+    console.log("Checking status for request:", requestId);
+    
     const response = await fetch(`${API_BASE_URL}/predictions/${requestId}`, {
       headers: getHeaders(),
     });
 
     if (!response.ok) {
+      console.error("MagicAPI status error:", response.status, response.statusText);
       await handleApiError(response, "get deblur result");
     }
 
     const data = (await response.json()) as DeblurStatusResponse;
+    console.log("MagicAPI status response:", data);
 
-    // 根据API文档转换响应格式
+    // 根据API文档直接返回响应数据
     return {
       status: data.status,
-      image_url: data.result, // API返回的是result字段，我们转换为image_url以保持内部一致性
+      image_url: data.image_url,
       error: data.error,
     };
   } catch (error) {
+    console.error("Error getting status from MagicAPI:", error);
     if (error instanceof TRPCError) throw error;
     
     throw new TRPCError({

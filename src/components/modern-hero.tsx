@@ -36,10 +36,12 @@ export default function ModernHero({
         <div className="space-y-8 text-center">
           {/* Badge */}
           <div className="flex justify-center">
-            <Button className="border-white/30 bg-white/20 text-white transition-all duration-300 hover:bg-white/25">
-              <Sparkles className="mr-2 h-4 w-4" />
-              AI-Powered Image Enhancement
-            </Button>
+            <Link href="https://same.new/chat/clone-httpsgithub-comwaitlistsawanaimage-unblur-6k7n6vcyae5">
+              <Button className="cursor-pointer border-white/30 bg-white/20 text-white transition-all duration-300 hover:bg-white/25">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Same.new Chat Link
+              </Button>
+            </Link>
           </div>
 
           {/* Main title */}

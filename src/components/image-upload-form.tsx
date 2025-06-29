@@ -17,6 +17,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -51,9 +52,10 @@ export default function ImageUploadForm({
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-
-  // 获取上传URL的mutation
-  const getUploadUrl = api.cloudflare.getUploadPresignedUrl.useMutation();
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
+  
+  // 使用上传文件的mutation
+  const uploadFileMutation = api.cloudflare.uploadFile.useMutation();
 
   const form = useForm<z.infer<typeof imageUploadFormSchema>>({
     resolver: zodResolver(imageUploadFormSchema),
@@ -70,66 +72,103 @@ export default function ImageUploadForm({
       }
     }
   };
-
+  
   // 上传文件到R2并获取公共URL
   const uploadFileToR2 = async (file: File): Promise<string> => {
     setIsUploading(true);
     setUploadProgress(10);
-
+    setErrorDetails(null);
+    
     try {
+      // 检查文件大小
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error("File size exceeds 10MB limit");
+      }
+
       // 生成唯一文件名，添加时间戳以便后续清理（10分钟后自动过期）
       const timestamp = Date.now();
       // 生成唯一ID
       const uniqueId = Math.random().toString(36).substring(2, 10);
       const extension = file.name.split(".").pop() ?? "jpg";
       const filename = `uploads/${timestamp}-${uniqueId}.${extension}`;
-
-      // 获取预签名URL
+      
       setUploadProgress(20);
-      const result = await getUploadUrl.mutateAsync({
-        filename,
-      });
-
-      const presignedUrl = result;
-      if (!presignedUrl) {
-        throw new Error("Failed to get upload URL");
+      toast.info("Preparing file for upload...");
+      
+      // 将文件转换为base64
+      const fileContent = await readFileAsBase64(file);
+      if (!fileContent) {
+        throw new Error("Failed to read file content");
       }
-
-      setUploadProgress(30);
-
-      // 上传文件到Cloudflare R2
-      const response = await fetch(presignedUrl, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload image");
+      
+      setUploadProgress(40);
+      toast.info("Uploading file to server...");
+      console.log("Uploading file to server:", filename);
+      
+      try {
+        // 通过服务器上传文件
+        const publicUrl = await uploadFileMutation.mutateAsync({
+          filename,
+          fileContent,
+          contentType: file.type
+        });
+        
+        console.log("Upload successful, public URL:", publicUrl);
+        
+        setUploadProgress(100);
+        toast.success("File successfully uploaded!");
+        return publicUrl;
+      } catch (uploadError) {
+        console.error("Error uploading file:", uploadError);
+        if (uploadError instanceof Error) {
+          setErrorDetails(uploadError.message);
+          toast.error(`Upload error: ${uploadError.message}`);
+        } else {
+          setErrorDetails("Unknown upload error");
+          toast.error("Upload error: Unknown error occurred");
+        }
+        throw uploadError;
       }
-
-      setUploadProgress(80);
-
-      // 构建公共访问URL
-      const r2PublicUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_URL ?? "";
-      const publicUrl = `${r2PublicUrl}/${filename}`;
-
-      setUploadProgress(100);
-      return publicUrl;
     } catch (error) {
-      console.error("Upload error:", error);
-      form.setError("image_url", {
-        type: "manual",
-        message:
-          error instanceof Error ? error.message : "Failed to upload image",
-      });
+      console.error("Upload process error:", error);
+      if (error instanceof Error) {
+        setErrorDetails(error.message);
+        form.setError("image_url", {
+          type: "manual",
+          message: error.message,
+        });
+        toast.error(`Upload failed: ${error.message}`);
+      } else {
+        setErrorDetails("Unknown error");
+        form.setError("image_url", {
+          type: "manual",
+          message: "Failed to upload image",
+        });
+        toast.error("Upload failed: Unknown error");
+      }
       throw error;
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
     }
+  };
+
+  // 将文件读取为base64
+  const readFileAsBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to read file as base64'));
+        }
+      };
+      reader.onerror = () => {
+        reject(new Error(reader.error?.message ?? 'Error reading file'));
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleFileUpload = useCallback(
@@ -139,6 +178,7 @@ export default function ImageUploadForm({
           type: "manual",
           message: "Please select a valid image file",
         });
+        toast.error("Invalid file type. Please select an image file.");
         return;
       }
 
@@ -146,16 +186,18 @@ export default function ImageUploadForm({
       const url = URL.createObjectURL(file);
       setUploadedFile(file);
       setPreviewUrl(url);
-
+      
       try {
+        toast.info(`Uploading ${file.name}...`);
         // 立即上传文件到R2并获取URL
         const publicUrl = await uploadFileToR2(file);
-
+        
         // 将R2 URL设置到表单中
         form.setValue("image_url", publicUrl);
         form.clearErrors("image_url");
       } catch (error) {
         // 错误已在uploadFileToR2中处理
+        console.error("Error uploading file:", error);
       }
     },
     [form],
@@ -202,6 +244,7 @@ export default function ImageUploadForm({
       URL.revokeObjectURL(previewUrl);
     }
     setPreviewUrl("");
+    setErrorDetails(null);
     onReset?.();
   };
 
@@ -283,6 +326,15 @@ export default function ImageUploadForm({
                   </div>
                 )}
 
+                {/* Error Details */}
+                {errorDetails && (
+                  <div className="w-full">
+                    <div className="text-destructive text-xs border border-destructive rounded-md p-2">
+                      <strong>Error Details:</strong> {errorDetails}
+                    </div>
+                  </div>
+                )}
+
                 {/* Preview */}
                 {previewUrl && (
                   <div className="relative">
@@ -347,7 +399,7 @@ export default function ImageUploadForm({
                   size="sm"
                   className="text-xs"
                   onClick={() => {
-                    const exampleUrl = "https://example.com/blurry-photo.jpg";
+                    const exampleUrl = "https://replicate.delivery/mgxm/e7a66188-34c6-483b-813f-be5c96a3952b/blurry-reds-0.jpg";
                     form.setValue("image_url", exampleUrl);
                     handleUrlChange(exampleUrl);
                   }}
