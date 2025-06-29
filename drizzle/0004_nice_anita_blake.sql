@@ -1,0 +1,1 @@
+ALTER TABLE "ai-image-generator-starter_user" ADD COLUMN "lastRefreshCredit" timestamp with time zone;
