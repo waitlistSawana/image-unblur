@@ -31,6 +31,14 @@ export const displayStatusEnum = pgEnum("display_status", [
   "private",
 ]);
 
+// Image deblur request status enum
+export const deblurStatusEnum = pgEnum("deblur_status", [
+  "pending",
+  "processing",
+  "completed",
+  "failed",
+]);
+
 // 测试用 不要删除
 export const posts = createTable(
   "post",
@@ -187,6 +195,59 @@ export const billings = createTable(
       foreignColumns: [t.id],
     })
       .onDelete("set null")
+      .onUpdate("cascade"),
+  ],
+);
+
+// Image deblur requests table
+export const deblurRequests = createTable(
+  "deblur_request",
+  (d) => ({
+    // ids
+    id: d.uuid().primaryKey().defaultRandom(),
+    userId: d.uuid().notNull(),
+    clerkId: d.varchar({ length: 256 }).notNull(),
+
+    // request tracking
+    requestId: d.varchar({ length: 256 }).unique().notNull(), // MagicAPI request ID
+    status: deblurStatusEnum().default("pending").notNull(),
+
+    // image info
+    originalImageUrl: d.varchar({ length: 512 }).notNull(), // original blurry image URL
+    processedImageUrl: d.varchar({ length: 512 }), // processed clear image URL (temporary, expires)
+
+    // metadata
+    processingStartedAt: d.timestamp({ withTimezone: true }),
+    processingCompletedAt: d.timestamp({ withTimezone: true }),
+    expiresAt: d.timestamp({ withTimezone: true }), // when the processed image URL expires
+
+    // cost tracking
+    creditsCost: d.integer().default(1).notNull(),
+
+    // error tracking
+    errorMessage: d.text(),
+
+    // timestamps
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+  }),
+  (t) => [
+    // indexes for efficient queries
+    index("deblur_request_clerkId_idx").on(t.clerkId),
+    index("deblur_request_requestId_idx").on(t.requestId),
+    index("deblur_request_status_idx").on(t.status),
+    index("deblur_request_createdAt_idx").on(t.createdAt),
+
+    // foreign key to users table
+    foreignKey({
+      name: "deblur_request_user_fk",
+      columns: [t.userId],
+      foreignColumns: [users.id],
+    })
+      .onDelete("cascade")
       .onUpdate("cascade"),
   ],
 );

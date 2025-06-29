@@ -15,7 +15,7 @@ interface PackageButtonProps {
 
 export default function PackageButton({
   className,
-  packageId,
+  packageId: _packageId,
   priceId,
   ...props
 }: React.ComponentProps<"button"> & PackageButtonProps) {

@@ -1,12 +1,12 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { images, users } from "~/server/db/schema";
+import { deblurRequests, users } from "~/server/db/schema";
 import { calculateRemainingCredits, hasEnoughCredits } from "~/lib/credit";
 import { env } from "~/env";
 
@@ -26,6 +26,7 @@ interface SubmitDeblurResponse {
 interface DeblurStatusResponse {
   status: string;
   image_url?: string;
+  error?: string;
 }
 
 interface ApiErrorResponse {
@@ -141,22 +142,24 @@ export const imageDeblurRouter = createTRPCRouter({
           })
           .where(eq(users.clerkId, clerkId));
 
-        // Save the request to database (optional, for tracking)
-        const savedImage = await ctx.db
-          .insert(images)
+        // Save the deblur request to database for tracking
+        const savedRequest = await ctx.db
+          .insert(deblurRequests)
           .values({
+            userId: user.id,
             clerkId: clerkId,
-            prompt: `Image deblurring request`, // or store original image URL
-            imageUrl: "", // Will be updated when processing is complete
             requestId: requestId,
             status: "processing",
+            originalImageUrl: input.image_url,
+            creditsCost: creditCost,
+            processingStartedAt: new Date(),
           })
           .returning();
 
         return {
           success: true,
           requestId: requestId,
-          imageId: savedImage[0]?.id,
+          deblurRequestId: savedRequest[0]?.id,
           creditsRemaining: newCreditBalance,
         };
       } catch (error) {
@@ -173,36 +176,55 @@ export const imageDeblurRouter = createTRPCRouter({
     .input(
       z.object({
         requestId: z.string(),
-        imageId: z.string().optional(),
+        deblurRequestId: z.string().uuid().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
       try {
+        // Get result from MagicAPI
         const result = await getDeblurResult(input.requestId);
 
-        // If processing is complete, update database status (no image storage needed)
-        if (result.status === "completed" && input.imageId) {
+        // Find the deblur request in our database
+        const dbRequest = await ctx.db.query.deblurRequests.findFirst({
+          where: eq(deblurRequests.requestId, input.requestId),
+        });
+
+        if (!dbRequest) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Deblur request not found in database",
+          });
+        }
+
+        // Update database status based on API result
+        if (result.status === "completed" && result.image_url) {
           try {
-            // Update the database record with completion status only
+            const expirationTime = new Date();
+            expirationTime.setMinutes(expirationTime.getMinutes() + 10); // Expires in 10 minutes
+
             await ctx.db
-              .update(images)
+              .update(deblurRequests)
               .set({
                 status: "completed",
-                // Don't store imageUrl since it expires in 10 minutes
+                processedImageUrl: result.image_url,
+                processingCompletedAt: new Date(),
+                expiresAt: expirationTime,
               })
-              .where(eq(images.id, input.imageId));
+              .where(eq(deblurRequests.requestId, input.requestId));
           } catch (dbError) {
             console.error("Failed to update database:", dbError);
             // Continue anyway, don't block the response
           }
-        } else if (result.status === "failed" && input.imageId) {
+        } else if (result.status === "failed") {
           try {
             await ctx.db
-              .update(images)
+              .update(deblurRequests)
               .set({
                 status: "failed",
+                errorMessage: result.error ?? "Processing failed",
+                processingCompletedAt: new Date(),
               })
-              .where(eq(images.id, input.imageId));
+              .where(eq(deblurRequests.requestId, input.requestId));
           } catch (dbError) {
             console.error("Failed to update database:", dbError);
           }
@@ -210,8 +232,12 @@ export const imageDeblurRouter = createTRPCRouter({
 
         return {
           ...result,
+          original_url: dbRequest.originalImageUrl,
           // Add expiration warning for frontend
           expires_in_minutes: result.status === "completed" ? 10 : undefined,
+          warning: result.status === "completed"
+            ? "Processed image URL expires in 10 minutes. Download or cache locally."
+            : undefined,
         };
       } catch (error) {
         throw new TRPCError({
@@ -242,13 +268,47 @@ export const imageDeblurRouter = createTRPCRouter({
 
       const clerkId = ctx.clerkId;
 
-      const userImages = await ctx.db.query.images.findMany({
-        where: eq(images.clerkId, clerkId),
+      const userRequests = await ctx.db.query.deblurRequests.findMany({
+        where: eq(deblurRequests.clerkId, clerkId),
         limit: input.limit,
         offset: input.offset,
-        orderBy: (images, { desc }) => [desc(images.createdAt)],
+        orderBy: (deblurRequests, { desc }) => [desc(deblurRequests.createdAt)],
       });
 
-      return userImages;
+      return userRequests;
+    }),
+
+  // Add cleanup method for expired requests
+  cleanupExpiredRequests: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      if (!ctx.clerkId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User session not found",
+        });
+      }
+
+      try {
+        // Clean up requests where processedImageUrl has expired
+        const now = new Date();
+        await ctx.db
+          .update(deblurRequests)
+          .set({
+            processedImageUrl: null,
+          })
+          .where(
+            sql`${deblurRequests.expiresAt} < ${now} AND ${deblurRequests.processedImageUrl} IS NOT NULL`
+          );
+
+        return {
+          success: true,
+          message: "Expired image URLs have been cleaned up",
+        };
+      } catch {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to cleanup expired requests",
+        });
+      }
     }),
 });

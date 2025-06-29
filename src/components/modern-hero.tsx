@@ -2,7 +2,6 @@
 
 import { cn } from "~/lib/utils";
 import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
 import Link from "next/link";
 import { Sparkles, Zap, ArrowRight } from "lucide-react";
 

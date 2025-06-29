@@ -33,7 +33,7 @@ interface ImageComparisonPreviewProps {
 
 export default function ImageComparisonPreview({
   className,
-  isLoading,
+  isLoading: _isLoading,
   originalImageUrl,
   processedImageUrl,
   status,
