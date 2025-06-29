@@ -1,4 +1,5 @@
 import { Navbar } from "~/components/navbar";
+import ModernFooter from "~/components/modern-footer";
 
 export default function ExamplesLayout({
   children,
@@ -9,6 +10,7 @@ export default function ExamplesLayout({
     <div id="ExamplesLayout">
       <Navbar id="navbar" />
       {children}
+      <ModernFooter />
     </div>
   );
 }
