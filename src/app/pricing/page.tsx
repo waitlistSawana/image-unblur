@@ -22,14 +22,15 @@ export default async function PricingPage() {
           <h1 className="max-w-4xl text-5xl font-bold md:text-6xl lg:text-7xl">
             Simple,
             <span className="from-primary bg-gradient-to-r to-purple-600 bg-clip-text text-transparent">
-              {" "}Fair Pricing{" "}
+              {" "}
+              Fair Pricing{" "}
             </span>
             for Everyone
           </h1>
 
           <p className="text-muted-foreground max-w-3xl text-xl md:text-2xl">
-            Choose the perfect plan for your image enhancement needs.
-            No hidden fees, cancel anytime.
+            Choose the perfect plan for your image enhancement needs. No hidden
+            fees, cancel anytime.
           </p>
 
           {/* Trust indicators */}

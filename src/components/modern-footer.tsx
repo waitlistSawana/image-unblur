@@ -62,7 +62,7 @@ export default function ModernFooter({
   return (
     <footer
       className={cn(
-        "relative bg-muted/30 border-t border-border/50",
+        "bg-muted/30 border-border/50 relative border-t",
         className,
       )}
       {...props}
@@ -81,7 +81,7 @@ export default function ModernFooter({
             <div className="lg:col-span-2">
               <Link
                 href="/"
-                className="flex items-center gap-3 font-serif text-xl font-bold transition-colors hover:text-primary"
+                className="hover:text-primary flex items-center gap-3 font-serif text-xl font-bold transition-colors"
               >
                 <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-xl">
                   <Sparkles className="text-primary h-6 w-6" />
@@ -186,17 +186,17 @@ export default function ModernFooter({
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-border/50 bg-background/50">
+        <div className="border-border/50 bg-background/50 border-t">
           <div className="container mx-auto px-6 py-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-2 text-sm">
                 <span>© {new Date().getFullYear()} ImageUnblur.</span>
                 <span>Made with</span>
                 <Heart className="h-4 w-4 fill-red-500 text-red-500" />
                 <span>for creators worldwide.</span>
               </div>
 
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-6 text-sm">
                 <span>Powered by cutting-edge AI technology</span>
                 <Badge variant="outline" className="text-xs">
                   v2.0

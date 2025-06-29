@@ -119,7 +119,10 @@ export default function ModernDemo({
                         onClick={startDemo}
                         disabled={isProcessing}
                       >
-                        <Image className="mr-2 h-4 w-4" aria-label="Upload image icon" />
+                        <Image
+                          className="mr-2 h-4 w-4"
+                          aria-label="Upload image icon"
+                        />
                         Try Demo Image
                       </Button>
                     </div>
@@ -189,7 +192,10 @@ export default function ModernDemo({
                   ) : (
                     <div className="text-muted-foreground p-8 text-center">
                       <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                        <Image className="h-8 w-8" aria-label="Result image placeholder" />
+                        <Image
+                          className="h-8 w-8"
+                          aria-label="Result image placeholder"
+                        />
                       </div>
                       <h3 className="mb-2 font-medium">Enhanced Result</h3>
                       <p className="text-sm">

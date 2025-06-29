@@ -121,7 +121,7 @@ export default function ModernPricing({
             >
               {/* Popular badge */}
               {plan.badge && (
-                <div className="absolute z-10 top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div className="absolute top-0 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
                   <Badge className="bg-primary text-primary-foreground px-4 py-1">
                     <Star className="mr-1 h-4 w-4" />
                     {plan.badge}

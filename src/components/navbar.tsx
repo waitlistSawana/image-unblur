@@ -48,7 +48,7 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50 supports-[backdrop-filter]:bg-background/60",
+        "bg-background/80 border-border/50 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur-lg",
         className,
       )}
       {...props}
@@ -57,35 +57,39 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-3 font-serif text-xl font-bold transition-colors hover:text-primary"
+          className="hover:text-primary flex items-center gap-3 font-serif text-xl font-bold transition-colors"
         >
           <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
             <Sparkles className="text-primary h-5 w-5" />
           </div>
           <span className="hidden sm:block">ImageUnblur</span>
-          <Badge className="bg-primary/10 text-primary border-primary/20 hidden md:inline-flex text-xs">
+          <Badge className="bg-primary/10 text-primary border-primary/20 hidden text-xs md:inline-flex">
             AI-Powered
           </Badge>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex flex-1 justify-start">
+        <div className="hidden flex-1 justify-start md:flex">
           <NavbarNavigation navigations={navbarOptions} />
         </div>
 
         {/* Auth & Mobile Menu */}
         <div className="flex flex-row items-center gap-3">
           {/* Auth Buttons */}
-          <div className="hidden md:flex flex-row gap-2">
+          <div className="hidden flex-row gap-2 md:flex">
             <ClerkLoading>
-              <Button variant="ghost" size="sm">Sign In</Button>
+              <Button variant="ghost" size="sm">
+                Sign In
+              </Button>
               <Button size="sm">Sign Up</Button>
             </ClerkLoading>
 
             <ClerkLoaded>
               <SignedOut>
                 <SignInButton mode="modal">
-                  <Button variant="ghost" size="sm">Sign In</Button>
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
                 </SignInButton>
                 <SignUpButton mode="modal">
                   <Button size="sm">Sign Up</Button>
@@ -116,21 +120,25 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
             className="md:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isMobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </Button>
         </div>
       </div>
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
-        <div className="border-t border-border/50 bg-background/95 backdrop-blur-lg md:hidden">
+        <div className="border-border/50 bg-background/95 border-t backdrop-blur-lg md:hidden">
           <div className="container mx-auto px-4 py-4">
             <nav className="flex flex-col space-y-4">
               {navbarOptions.map((option) => (
                 <Link
                   key={option.href}
                   href={option.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                  className="text-muted-foreground hover:text-foreground py-2 transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {option.label}
@@ -138,16 +146,22 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
               ))}
 
               {/* Mobile Auth */}
-              <div className="flex flex-col gap-3 pt-4 border-t border-border/50">
+              <div className="border-border/50 flex flex-col gap-3 border-t pt-4">
                 <ClerkLoading>
-                  <Button variant="ghost" size="sm">Sign In</Button>
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
                   <Button size="sm">Sign Up</Button>
                 </ClerkLoading>
 
                 <ClerkLoaded>
                   <SignedOut>
                     <SignInButton mode="modal">
-                      <Button variant="ghost" size="sm" className="justify-start">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="justify-start"
+                      >
                         Sign In
                       </Button>
                     </SignInButton>
@@ -159,7 +173,12 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
                   </SignedOut>
 
                   <SignedIn>
-                    <Button variant="ghost" size="sm" asChild className="justify-start">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      className="justify-start"
+                    >
                       <Link href="/text-to-image">Create Image</Link>
                     </Button>
                     <div className="flex items-center gap-3 py-2">
@@ -199,7 +218,7 @@ const NavbarNavigation = ({
             <NavigationMenuLink asChild>
               <Link
                 href={option.href}
-                className="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                className="group hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
               >
                 {option.label}
               </Link>

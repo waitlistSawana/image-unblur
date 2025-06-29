@@ -37,7 +37,8 @@ export default async function Home() {
             <h2 className="mb-6 text-4xl font-bold md:text-5xl lg:text-6xl">
               See the Magic in
               <span className="from-primary bg-gradient-to-r to-purple-600 bg-clip-text text-transparent">
-                {" "}Action
+                {" "}
+                Action
               </span>
             </h2>
             <p className="text-muted-foreground mx-auto max-w-3xl text-xl">
@@ -47,7 +48,7 @@ export default async function Home() {
           </div>
 
           {/* Same ImageDeblur component used in /image-deblur page */}
-          <ImageDeblur className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-8 shadow-2xl" />
+          <ImageDeblur className="bg-card/50 border-border/50 rounded-2xl border p-8 shadow-2xl backdrop-blur-sm" />
         </div>
       </section>
 
