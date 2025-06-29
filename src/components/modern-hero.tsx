@@ -82,29 +82,6 @@ export default function ModernHero({
             </div>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col justify-center gap-4 pt-4 sm:flex-row">
-            <Button
-              size="lg"
-              className="group h-auto border-0 bg-[var(--color-accent-orange)] px-8 py-6 text-lg text-white transition-all duration-300 hover:scale-105 hover:bg-[var(--color-accent-orange)]/90"
-              asChild
-            >
-              <Link href="/image-deblur" className="flex items-center gap-2">
-                <Zap className="h-5 w-5" />
-                Start Deblurring Now
-                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="h-auto border-white/30 bg-transparent px-8 py-6 text-lg text-white transition-all duration-300 hover:bg-white/10 hover:text-white"
-              asChild
-            >
-              <Link href="#demo">See Demo</Link>
-            </Button>
-          </div>
-
           {/* Scroll indicator */}
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
             <div className="flex h-10 w-6 justify-center rounded-full border-2 border-white/50">

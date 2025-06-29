@@ -11,198 +11,167 @@ import { downloadAndCacheImage } from "~/lib/image-cache";
 
 interface DeblurResult {
   requestId: string;
-  deblurRequestId?: string;
   original_url: string;
   processed_url?: string;
-  local_processed_url?: string; // 本地缓存的 blob URL
+  local_processed_url?: string;
   status: "processing" | "completed" | "failed";
-  isDownloading?: boolean; // 是否正在下载缓存
+  isDownloading?: boolean;
 }
-
-
 
 export default function ImageDeblur({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const { openSignIn, isSignedIn } = useClerk();
+  const { openSignIn, loaded, isSignedIn } = useClerk();
   const [currentResult, setCurrentResult] = useState<DeblurResult | null>(null);
-  const trpcUtils = api.useUtils();
 
   const { mutate: submitDeblurMutate, isPending: isSubmitting } =
     api.imageDeblur.submitDeblur.useMutation({
       onSuccess(data) {
         toast.success("Image submitted for deblurring!");
-
-        // Set initial result state
         setCurrentResult({
           requestId: data.requestId,
-          deblurRequestId: data.deblurRequestId,
-          original_url: "", // Will be set by form
+          original_url: data.originalUrl,
           status: "processing",
         });
       },
       onError(error) {
-        const code = error.data?.code;
-        const message = error.message;
-
-        toast.error(code, {
-          description: message,
+        toast.error(error.data?.code ?? "Error", {
+          description: error.message,
         });
-      },
-      onSettled() {
-        void trpcUtils.credit.getUserCredit.invalidate();
-      },
+      }
     });
 
   const { data: statusData, isLoading: isCheckingStatus } =
     api.imageDeblur.getDeblurStatus.useQuery(
       {
         requestId: currentResult?.requestId ?? "",
-        deblurRequestId: currentResult?.deblurRequestId,
       },
       {
         enabled:
           !!currentResult?.requestId && currentResult.status === "processing",
-        refetchInterval: () => {
-          // Stop polling if completed or failed
-          if (
-            statusData?.status === "completed" ||
-            statusData?.status === "failed"
-          ) {
-            return false;
-          }
-          return 3000; // Poll every 3 seconds
-        },
+        refetchInterval: 3000,
       },
     );
 
   // Handle status data changes
   useEffect(() => {
-    if (statusData && currentResult?.requestId) {
-      if (statusData.status === "completed" && statusData.image_url) {
-        // 立即开始下载和缓存图片
-        setCurrentResult((prev) =>
-          prev
-            ? {
-                ...prev,
-                processed_url: statusData.image_url,
-                status: "completed",
-                isDownloading: true,
-              }
-            : null,
-        );
+    if (!statusData || !currentResult?.requestId) return;
 
-        // 异步下载和缓存图片
-        const cacheKey = `deblurred-${currentResult.requestId}`;
-        downloadAndCacheImage(statusData.image_url, cacheKey)
-          .then((localUrl) => {
-            setCurrentResult((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    local_processed_url: localUrl,
-                    isDownloading: false,
-                  }
-                : null,
-            );
+    // Stop refetching if completed or failed
+    if (statusData.status === "completed" || statusData.status === "failed") {
+      // 停止轮询，不使用cancel
+    }
 
-            if (statusData.expires_in_minutes) {
-              toast.success(
-                `Image deblurring completed! Cached locally for offline viewing.`,
-                {
-                  description: `Original link expires in ${statusData.expires_in_minutes} minutes.`,
-                },
-              );
-            } else {
-              toast.success(
-                "Image deblurring completed and cached locally!",
-              );
-            }
-          })
-          .catch((error) => {
-            console.error("Failed to cache image:", error);
-            setCurrentResult((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    isDownloading: false,
-                  }
-                : null,
-            );
-            toast.success("Image deblurring completed!", {
-              description: "Image caching failed, but result is available.",
-            });
-          });
-      } else if (statusData.status === "failed") {
-        setCurrentResult((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "failed",
-              }
-            : null,
-        );
-        toast.error("Image deblurring failed. Please try again.");
-      }
+    if (statusData.status === "completed" && statusData.image_url) {
+      handleCompletedStatus({
+        image_url: statusData.image_url,
+        expires_in_minutes: statusData.expires_in_minutes
+      });
+    } else if (statusData.status === "failed") {
+      setCurrentResult((prev) =>
+        prev ? { ...prev, status: "failed" } : null
+      );
+      toast.error("Image deblurring failed. Please try again.");
     }
   }, [statusData, currentResult?.requestId]);
 
+  const handleCompletedStatus = (statusData: {
+    image_url: string;
+    expires_in_minutes?: number;
+  }) => {
+    if (!currentResult) return;
+
+    // Update state to show we're downloading
+    setCurrentResult((prev) =>
+      prev
+        ? {
+            ...prev,
+            processed_url: statusData.image_url,
+            status: "completed",
+            isDownloading: true,
+          }
+        : null
+    );
+
+    // Cache the image
+    const cacheKey = `deblurred-${currentResult.requestId}`;
+    void downloadAndCacheImage(statusData.image_url, cacheKey)
+      .then((localUrl) => {
+        setCurrentResult((prev) =>
+          prev
+            ? {
+                ...prev,
+                local_processed_url: localUrl,
+                isDownloading: false,
+              }
+            : null
+        );
+
+        const message = "Image deblurring completed and cached locally!";
+        const description = statusData.expires_in_minutes
+          ? `Original link expires in ${statusData.expires_in_minutes} minutes.`
+          : undefined;
+
+        toast.success(message, { description });
+      })
+      .catch((error) => {
+        console.error("Failed to cache image:", error);
+        setCurrentResult((prev) =>
+          prev ? { ...prev, isDownloading: false } : null
+        );
+        toast.success("Image deblurring completed!", {
+          description: "Image caching failed, but result is available.",
+        });
+      });
+  };
+
   const handleSubmit = async (imageUrl: string) => {
-    if (!isSignedIn) {
+    if (!loaded && !isSignedIn) {
       openSignIn();
       return false;
     }
 
-    // Reset current result and clear any cached URLs
     setCurrentResult({
       requestId: "",
       original_url: imageUrl,
       status: "processing",
     });
 
-    submitDeblurMutate({
-      image_url: imageUrl,
-    });
-
+    submitDeblurMutate({ image_url: imageUrl });
     return true;
   };
 
-  const handleReset = () => {
-    setCurrentResult(null);
-  };
+  const handleReset = () => setCurrentResult(null);
 
-  const _isLoading =
-    isSubmitting || isCheckingStatus || Boolean(currentResult?.isDownloading);
-  const showComparison = currentResult?.original_url;
+  // Derived state
+  const isLoading = isSubmitting || isCheckingStatus || Boolean(currentResult?.isDownloading);
+  const showComparison = Boolean(currentResult?.original_url);
   const isProcessing = currentResult?.status === "processing";
-
-  // 优先使用本地缓存的图片URL
-  const displayProcessedUrl =
-    currentResult?.local_processed_url ?? currentResult?.processed_url;
+  const displayProcessedUrl = currentResult?.local_processed_url ?? currentResult?.processed_url;
 
   return (
     <div
       className={cn(
         "mx-auto flex max-w-6xl flex-col gap-4 p-4 md:flex-row",
-        className,
+        className
       )}
       {...props}
     >
       <ImageUploadForm
         className="flex-2"
-        isLoading={_isLoading}
+        isLoading={isLoading}
         handleSubmit={handleSubmit}
         onReset={handleReset}
         disabled={isProcessing}
       />
       <ImageComparisonPreview
         className="flex-3"
-        isLoading={_isLoading}
+        isLoading={isLoading}
         originalImageUrl={currentResult?.original_url}
         processedImageUrl={displayProcessedUrl}
         status={currentResult?.status}
-        showComparison={!!showComparison}
+        showComparison={showComparison}
         isDownloading={currentResult?.isDownloading}
       />
     </div>

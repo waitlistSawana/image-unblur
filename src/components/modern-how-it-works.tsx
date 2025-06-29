@@ -91,7 +91,7 @@ export default function ModernHowItWorks({
                 <div className="flex-shrink-0">
                   <div className="relative">
                     <div
-                      className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${step.color} relative z-10 p-4`}
+                      className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${step.color} z-10 p-4`}
                     >
                       <step.icon className="h-8 w-8 text-white" />
                     </div>

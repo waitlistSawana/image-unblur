@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { BUCKET_NAME, S3 } from "~/service/cloudflare/r2/indext";
+import { BUCKET_NAME, S3 } from "~/service/cloudflare/r2";
 
 export const cloudflareRouter = createTRPCRouter({
   getDownloadPresignedUrl: protectedProcedure
@@ -21,9 +21,9 @@ export const cloudflareRouter = createTRPCRouter({
       return url;
     }),
 
-  getUploadPresignedUrl: protectedProcedure
+  getUploadPresignedUrl: publicProcedure
     .input(z.object({ filename: z.string() }))
-    .query(async ({ input }) => {
+    .mutation(async ({ input }) => {
       const { filename } = input;
 
       const url = await getSignedUrl(

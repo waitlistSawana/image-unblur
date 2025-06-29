@@ -9,7 +9,7 @@ import { replicate } from "~/service/replicate";
 import type { FileOutput } from "replicate";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { BUCKET_NAME, S3 } from "~/service/cloudflare/r2/indext";
+import { BUCKET_NAME, S3 } from "~/service/cloudflare/r2";
 
 export const blackForestLabsKontextProSchema = z.object({
   prompt: z

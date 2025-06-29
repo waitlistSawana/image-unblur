@@ -14,4 +14,4 @@ export const S3 = new S3Client({
   },
 });
 
-export const BUCKET_NAME = "ai-image-generator-stater";
+export const BUCKET_NAME = "unblur-image";

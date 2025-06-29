@@ -28,10 +28,10 @@ const navbarOptions: { href: string; label: string }[] = [
     href: "/",
     label: "Home",
   },
-  {
-    href: "/examples",
-    label: "Examples",
-  },
+  // {
+  //   href: "/examples",
+  //   label: "Examples",
+  // },
   {
     href: "/image-deblur",
     label: "Image Deblur",

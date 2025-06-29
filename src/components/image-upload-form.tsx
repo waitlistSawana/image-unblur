@@ -1,9 +1,10 @@
 "use client";
 
-import { cn } from "~/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Upload, Loader2, RotateCcw, X } from "lucide-react";
+import { Loader2, RotateCcw, Upload, X } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
+import { v4 } from "uuid";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -15,17 +16,16 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { cn } from "~/lib/utils";
+import { api } from "~/trpc/react";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import CreditButton from "./credit-button";
-import { useState, useCallback } from "react";
 
 export const imageUploadFormSchema = z.object({
   image_url: z.string().url("Please enter a valid image URL"),
@@ -50,6 +50,11 @@ export default function ImageUploadForm({
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  
+  // 获取上传URL的mutation
+  const getUploadUrl = api.cloudflare.getUploadPresignedUrl.useMutation();
 
   const form = useForm<z.infer<typeof imageUploadFormSchema>>({
     resolver: zodResolver(imageUploadFormSchema),
@@ -66,9 +71,71 @@ export default function ImageUploadForm({
       }
     }
   };
+  
+  // 上传文件到R2并获取公共URL
+  const uploadFileToR2 = async (file: File): Promise<string> => {
+    setIsUploading(true);
+    setUploadProgress(10);
+    
+    try {
+      // 生成唯一文件名，添加时间戳以便后续清理（10分钟后自动过期）
+      const timestamp = Date.now();
+      // 生成唯一ID并截取前8位
+      const id = v4();
+      const uniqueId = id.split("-")[0] || "temp";
+      const extension = file.name.split(".").pop() ?? "jpg";
+      const filename = `uploads/${timestamp}-${uniqueId}.${extension}`;
+      
+      // 获取预签名URL
+      setUploadProgress(20);
+      const result = await getUploadUrl.mutateAsync({
+        filename,
+      });
+      
+      const presignedUrl = result;
+      if (!presignedUrl) {
+        throw new Error("Failed to get upload URL");
+      }
+      
+      setUploadProgress(30);
+      
+      // 上传文件到Cloudflare R2
+      const response = await fetch(presignedUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+      
+      setUploadProgress(80);
+
+      // 构建公共访问URL
+      const r2PublicUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_URL ?? "";
+      const publicUrl = `${r2PublicUrl}/${filename}`;
+      
+      setUploadProgress(100);
+      return publicUrl;
+    } catch (error) {
+      console.error("Upload error:", error);
+      form.setError("image_url", {
+        type: "manual",
+        message:
+          error instanceof Error ? error.message : "Failed to upload image",
+      });
+      throw error;
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
 
   const handleFileUpload = useCallback(
-    (file: File) => {
+    async (file: File) => {
       if (!file.type.startsWith("image/")) {
         form.setError("image_url", {
           type: "manual",
@@ -77,12 +144,21 @@ export default function ImageUploadForm({
         return;
       }
 
-      // Create preview URL
+      // 创建本地预览
       const url = URL.createObjectURL(file);
       setUploadedFile(file);
       setPreviewUrl(url);
-      form.setValue("image_url", url);
-      form.clearErrors("image_url");
+      
+      try {
+        // 立即上传文件到R2并获取URL
+        const publicUrl = await uploadFileToR2(file);
+        
+        // 将R2 URL设置到表单中
+        form.setValue("image_url", publicUrl);
+        form.clearErrors("image_url");
+      } catch (error) {
+        // 错误已在uploadFileToR2中处理
+      }
     },
     [form],
   );
@@ -106,7 +182,7 @@ export default function ImageUploadForm({
       if (disabled) return;
 
       if (e.dataTransfer.files?.[0]) {
-        handleFileUpload(e.dataTransfer.files[0]);
+        void handleFileUpload(e.dataTransfer.files[0]);
       }
     },
     [disabled, handleFileUpload],
@@ -117,7 +193,7 @@ export default function ImageUploadForm({
     if (disabled) return;
 
     if (e.target.files?.[0]) {
-      handleFileUpload(e.target.files[0]);
+      void handleFileUpload(e.target.files[0]);
     }
   };
 
@@ -144,6 +220,8 @@ export default function ImageUploadForm({
     }
   };
 
+  const isFormDisabled = disabled ?? isLoading ?? isUploading;
+
   return (
     <div className={cn("", className)} {...props}>
       <Form {...form}>
@@ -154,9 +232,6 @@ export default function ImageUploadForm({
               <CardDescription>
                 Upload a blurry image to enhance its clarity with AI
               </CardDescription>
-              <CardAction>
-                <CreditButton />
-              </CardAction>
             </CardHeader>
 
             <CardContent className="w-full space-y-4">
@@ -168,7 +243,7 @@ export default function ImageUploadForm({
                     dragActive
                       ? "border-primary bg-primary/10"
                       : "border-muted-foreground/25",
-                    disabled && "cursor-not-allowed opacity-50",
+                    isFormDisabled && "cursor-not-allowed opacity-50",
                   )}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
@@ -180,7 +255,7 @@ export default function ImageUploadForm({
                     className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
                     onChange={handleFileSelect}
                     accept="image/*"
-                    disabled={disabled}
+                    disabled={isFormDisabled}
                   />
 
                   <div className="flex flex-col items-center gap-2">
@@ -194,6 +269,21 @@ export default function ImageUploadForm({
                     </div>
                   </div>
                 </div>
+
+                {/* Upload Progress */}
+                {isUploading && uploadProgress > 0 && (
+                  <div className="w-full space-y-1">
+                    <div className="text-xs text-muted-foreground text-center">
+                      Uploading image... {uploadProgress}%
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div
+                        className="bg-primary h-1.5 rounded-full"
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Preview */}
                 {previewUrl && (
@@ -209,7 +299,7 @@ export default function ImageUploadForm({
                       size="icon"
                       className="absolute top-2 right-2"
                       onClick={handleReset}
-                      disabled={disabled}
+                      disabled={isFormDisabled}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -243,7 +333,7 @@ export default function ImageUploadForm({
                           field.onChange(e);
                           handleUrlChange(e.target.value);
                         }}
-                        disabled={isLoading ?? disabled}
+                        disabled={isFormDisabled}
                       />
                     </FormControl>
                     <FormMessage />
@@ -263,7 +353,7 @@ export default function ImageUploadForm({
                     form.setValue("image_url", exampleUrl);
                     handleUrlChange(exampleUrl);
                   }}
-                  disabled={isLoading ?? disabled}
+                  disabled={isFormDisabled}
                 >
                   Sample Blurry Photo
                 </Button>
@@ -272,7 +362,7 @@ export default function ImageUploadForm({
                   variant="outline"
                   size="sm"
                   onClick={handleReset}
-                  disabled={isLoading ?? disabled}
+                  disabled={isFormDisabled}
                 >
                   <RotateCcw className="mr-1 h-3 w-3" />
                   Reset
@@ -284,12 +374,17 @@ export default function ImageUploadForm({
               <Button
                 type="submit"
                 className="w-full cursor-pointer transition-all"
-                disabled={isLoading ?? disabled ?? !form.watch("image_url")}
+                disabled={
+                  isLoading ??
+                  isUploading ??
+                  disabled ??
+                  !form.watch("image_url")
+                }
               >
-                {isLoading ? (
+                {isLoading || isUploading ? (
                   <>
                     <Loader2 className="mr-2 animate-spin" />
-                    Processing...
+                    {isUploading ? "Uploading..." : "Processing..."}
                   </>
                 ) : (
                   "Deblur Image"

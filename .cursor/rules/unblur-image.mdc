@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+## 环境
+
+
+
+- 环境变量优先用 `src/env.js` 中的方法，并实时更新它。同步更新 .env.example
