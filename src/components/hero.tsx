@@ -21,17 +21,17 @@ export default function Hero({
       {...props}
     >
       <h1 className="mx-auto max-w-5xl font-mono text-7xl font-bold">
-        欢迎使用 AI Image Generator Starter
+        欢迎使用 AI 图像去模糊
       </h1>
       <p className="mx-auto max-w-6xl text-center font-mono text-lg">
-        在几小时内启动你的 图片生成 SAAS 应用，而不是几天
+        使用先进的AI技术，让模糊照片变得清晰锐利
       </p>
       <div className="mx-auto grid grid-cols-2 gap-6 text-center">
         <Button variant={"outline"} size={"huge"} asChild>
-          <Link href={"/pricing"}>Pricing</Link>
+          <Link href={"/pricing"}>查看定价</Link>
         </Button>
         <Button variant={"default"} size={"huge"} asChild>
-          <Link href={"/text-to-image"}>生成图片</Link>
+          <Link href={"/image-deblur"}>开始去模糊</Link>
         </Button>
       </div>
     </div>

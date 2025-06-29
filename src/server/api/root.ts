@@ -5,6 +5,7 @@ import { generateImageRouter } from "./routers/generateImage";
 import { cloudflareRouter } from "./routers/cloudflare";
 import { billingRouter } from "./routers/billing";
 import { creditRouter } from "./routers/credit";
+import { imageDeblurRouter } from "./routers/imageDeblur";
 
 /**
  * This is the primary router for your server.
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   cloudflare: cloudflareRouter,
   billing: billingRouter,
   credit: creditRouter,
+  imageDeblur: imageDeblurRouter,
 });
 
 // export type definition of API

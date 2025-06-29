@@ -28,8 +28,8 @@ const navbarOptions: { href: string; label: string }[] = [
     label: "Examples",
   },
   {
-    href: "/text-to-image",
-    label: "Text to Image",
+    href: "/image-deblur",
+    label: "Image Deblur",
   },
   {
     href: "/pricing",
@@ -47,7 +47,7 @@ export function Navbar({ className, ...props }: React.ComponentProps<"div">) {
       {...props}
     >
       <div className="flex flex-nowrap justify-start font-serif text-lg font-semibold">
-        Image Generator Starter
+        ImageUnblur
       </div>
 
       <div className="flex-1">

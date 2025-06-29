@@ -16,8 +16,8 @@ export const env = createEnv({
     DATABASE_URL: z.string().url(),
     // Clerk
     CLERK_SECRET_KEY: z.string().min(1),
-    // Replicate
-    REPLICATE_API_TOKEN: z.string().min(1),
+    // MagicAPI
+    MAGICAPI_KEY: z.string().min(1),
     // Cloudflare
     CLOUDFLARE_R2_ACCOUNT_ID: z.string().min(1),
     CLOUDFLARE_R2_ACCESS_KEY_ID: z.string().min(1),
@@ -83,8 +83,8 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL,
     NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL:
       process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL,
-    // Replicate
-    REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN,
+    // MagicAPI
+    MAGICAPI_KEY: process.env.MAGICAPI_KEY,
     // Cloudflare
     CLOUDFLARE_R2_ACCOUNT_ID: process.env.CLOUDFLARE_R2_ACCOUNT_ID,
     CLOUDFLARE_R2_ACCESS_KEY_ID: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,

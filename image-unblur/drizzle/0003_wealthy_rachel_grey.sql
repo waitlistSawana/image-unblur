@@ -1,2 +1,0 @@
-ALTER TABLE "ai-image-generator-starter_user" ADD COLUMN "stripeValidMonths" integer DEFAULT 0;--> statement-breakpoint
-ALTER TABLE "ai-image-generator-starter_user" ADD COLUMN "stripeSubscriptionCycleAnchor" timestamp with time zone;

@@ -1,1 +1,0 @@
-ALTER TABLE "ai-image-generator-starter_user" DROP COLUMN "stripeValidMonths";
